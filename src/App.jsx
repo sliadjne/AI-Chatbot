@@ -1,6 +1,30 @@
+import { useState } from 'react';
 import { ChatbotIcon } from "./components/ChatbotIcon";
+import LandingPage from "./components/LandingPage";
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userCredentials, setUserCredentials] = useState(null);
+
+  const handleLogin = (credentials) => {
+    setUserCredentials(credentials);
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserCredentials(null);
+  };
+
+  const handleGuestAccess = () => {
+    setUserCredentials({ username: 'Guest' });
+    setIsLoggedIn(true);
+  };
+
+  if (!isLoggedIn) {
+    return <LandingPage onLogin={handleLogin} onGuestAccess={handleGuestAccess} />;
+  }
+
   return <div className="container">
     <div className="chatbot-popup">
       {/* Chatbot Header */}
@@ -9,7 +33,16 @@ const App = () => {
         <ChatbotIcon />
         <h2 className="logo-text"> Chatbox</h2>
       </div>
-      <button className="material-symbols-rounded">keyboard_arrow_down</button>
+      <div className="header-actions">
+        <button 
+          onClick={handleLogout}
+          className="back-button material-symbols-rounded" 
+          title="Back to Login"
+        >
+          arrow_back
+        </button>
+        <button className="material-symbols-rounded">keyboard_arrow_down</button>
+      </div>
       </div> 
 
     {/* Chatbot Body */}
@@ -17,7 +50,7 @@ const App = () => {
       <div className="message bot-message">
         <ChatbotIcon />
         <p className="message-text">
-          Hey girly🩷 <br /> Anything I can help?
+          Hey {userCredentials?.username || 'there'}!🩷 <br /> Anything I can help?
         </p>
       </div>
       <div className="message user-message">
