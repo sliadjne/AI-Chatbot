@@ -18,13 +18,16 @@ body {
 }
 
 .chatbot-popup{
-  position: relative;
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
   width: 420px;
   overflow: hidden;
   background: #ffe6e6;
   border-radius: 15px;
   box-shadow: 0 0 128px 0 rgba(50, 3, 3, 0.1),
     0 32px 64px -48px rgba(121, 10, 10, 0.2);
+  transform-origin: bottom right;
 }
 
 .chatbot-popup .chat-header{
@@ -85,6 +88,8 @@ body {
   overflow-y: auto;
   margin-bottom: 82px;
   padding: 25px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(237, 194, 200) transparent;
 }
 
 .chat-body .message { 
@@ -184,3 +189,81 @@ body {
   display: block;
 }
 
+.chatbot-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #ff6ea1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+.chatbot-toggle svg { width: 28px; height: 28px; }
+
+/* Animations for chatbot popup */
+@keyframes popupOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popupClose {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes toggleFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes toggleFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.chatbot-popup.open {
+  animation: popupOpen 0.2s ease-out;
+}
+
+.chatbot-popup.closing {
+  animation: popupClose 0.2s ease-out forwards;
+}
+
+.chatbot-toggle.open {
+  animation: toggleFadeIn 0.2s ease-out;
+}
+
+.chatbot-toggle.closing {
+  animation: toggleFadeOut 0.2s ease-out forwards;
+}
