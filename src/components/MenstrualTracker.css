@@ -1,0 +1,198 @@
+.tracker-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.tracker-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 8px 24px rgba(232, 120, 136, 0.15);
+}
+
+.tracker-title {
+  text-align: center;
+  color: rgb(232, 120, 136);
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.tracker-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.tracker-input {
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.tracker-input:focus {
+  border-color: rgb(232, 120, 136);
+  box-shadow: 0 0 0 3px rgba(232, 120, 136, 0.1);
+  background: #fff9f9;
+}
+
+.cycle-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.info-card {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.info-card h3 {
+  font-size: 14px;
+  color: #718096;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.phase-badge {
+  display: inline-block;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.phase-day {
+  font-size: 12px;
+  color: #718096;
+  margin-top: 8px;
+}
+
+.next-period-date {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.days-until {
+  font-size: 13px;
+  color: #718096;
+}
+
+.symptoms-section {
+  margin-bottom: 25px;
+}
+
+.symptoms-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 15px;
+}
+
+.symptoms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.symptom-btn {
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e0;
+  border-radius: 8px;
+  background: white;
+  color: #2d3748;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.symptom-btn:hover {
+  border-color: rgb(232, 120, 136);
+  color: rgb(232, 120, 136);
+}
+
+.symptom-btn.active {
+  background: rgb(232, 120, 136);
+  color: white;
+  border-color: rgb(232, 120, 136);
+  box-shadow: 0 4px 12px rgba(232, 120, 136, 0.3);
+}
+
+.phase-info {
+  background: #fff9f9;
+  border-left: 4px solid rgb(232, 120, 136);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.phase-info h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+.phase-description {
+  font-size: 13px;
+  color: #4a5568;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .tracker-card {
+    padding: 20px;
+  }
+
+  .tracker-title {
+    font-size: 20px;
+  }
+
+  .cycle-info {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .symptoms-grid {
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+  }
+}

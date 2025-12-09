@@ -3,6 +3,8 @@ import { ChatbotIcon } from "./components/ChatbotIcon";
 import ChatForm from "./components/ChatForm";
 import ChatMessage from "./components/ChatMessage";
 import LandingPage from "./components/LandingPage";
+import MenstrualTracker from "./components/MenstrualTracker";
+import Dashboard from "./components/Dashboard";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -95,6 +97,9 @@ const App = () => {
 
   const chatUI = (
     <div className="container">
+      <Dashboard />
+      <MenstrualTracker />
+      
       {/* Chatbot popup rendered only when open */}
       {open && (
         <div className={`chatbot-popup ${closing ? 'closing' : 'open'}`}>

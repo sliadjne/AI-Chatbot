@@ -11,24 +11,40 @@
 body {
   width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   min-height: 100vh;
-  background: linear-gradient(rgb(248, 128, 148),rgb(255, 185, 196), white)
+  background: #f7fafc;
+  margin: 0;
+  padding: 0;
 }
 
-.chatbot-popup{
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Chatbot popup (fixed bottom-right) */
+.chatbot-popup {
   position: fixed;
   bottom: 24px;
   right: 20px;
-  width: 420px;
+  width: 380px;
+  max-width: calc(100% - 40px);
   overflow: hidden;
   background: #ffe6e6;
   border-radius: 15px;
-  box-shadow: 0 0 128px 0 rgba(50, 3, 3, 0.1),
-    0 32px 64px -48px rgba(121, 10, 10, 0.2);
+  box-shadow: 0 8px 40px rgba(50, 3, 3, 0.12),
+    0 32px 64px -48px rgba(121, 10, 10, 0.15);
   transform-origin: bottom right;
+  z-index: 1200;
 }
+
 
 .chatbot-popup .chat-header{
   display: flex;
