@@ -2,8 +2,10 @@ import { useState } from "react";
 import { ChatbotIcon } from "./components/ChatbotIcon";
 import ChatForm from "./components/ChatForm";
 import ChatMessage from "./components/ChatMessage";
+import LandingPage from "./components/LandingPage";
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [chatHistory, seeChatHistory] = useState([]);
   const [open, setOpen] = useState(true);
   const [closing, setClosing] = useState(false);
@@ -74,49 +76,69 @@ const App = () => {
     }
   };
 
-  return <div className="container">
-    {/* Chatbot popup rendered only when open */}
-    {open && (
-      <div className={`chatbot-popup ${closing ? 'closing' : 'open'}`}>
-      {/* Chatbot Header */}
-     <div className="chat-header">
-      <div className="header-info">
-        <ChatbotIcon />
-        <h2 className="logo-text"> Chatbox</h2>
-      </div>
-      <button aria-label="Close chatbot" className="material-symbols-rounded" onClick={handleClose}>keyboard_arrow_down</button>
-      </div> 
+  // Handle login
+  const handleLogin = (credentials) => {
+    console.log('User logged in:', credentials.username);
+    setIsLoggedIn(true);
+  };
 
-    {/* Chatbot Body */}
-      <div className="chat-body">
-      <div className="message bot-message">
-        <ChatbotIcon />
-        <p className="message-text">
-          Hey girly🩷 <br /> Anything I can help?
-        </p>
-      </div>
+  // Handle guest access
+  const handleGuestAccess = () => {
+    console.log('User accessing as guest');
+    setIsLoggedIn(true);
+  };
 
-      {/* Render chat history */}
-      {chatHistory.map((chat, index) =>(
-        <ChatMessage key={index} chat={chat} />
-      ))}
+  // Show landing page if not logged in
+  if (!isLoggedIn) {
+    return <LandingPage onLogin={handleLogin} onGuestAccess={handleGuestAccess} />;
+  }
+
+  const chatUI = (
+    <div className="container">
+      {/* Chatbot popup rendered only when open */}
+      {open && (
+        <div className={`chatbot-popup ${closing ? 'closing' : 'open'}`}>
+        {/* Chatbot Header */}
+       <div className="chat-header">
+        <div className="header-info">
+          <ChatbotIcon />
+          <h2 className="logo-text"> Chatbox</h2>
+        </div>
+        <button aria-label="Close chatbot" className="material-symbols-rounded" onClick={handleClose}>keyboard_arrow_down</button>
+        </div> 
+
+      {/* Chatbot Body */}
+        <div className="chat-body">
+        <div className="message bot-message">
+          <ChatbotIcon />
+          <p className="message-text">
+            Hey girly🩷 <br /> Anything I can help?
+          </p>
+        </div>
+
+        {/* Render chat history */}
+        {chatHistory.map((chat, index) =>(
+          <ChatMessage key={index} chat={chat} />
+        ))}
+        </div>
+        
+      {/* Chatbot Footer */}
+        <div className="chat-footer"> 
+          <ChatForm chatHistory={chatHistory} setChatHistory={seeChatHistory} generateBotResponse={generateBotResponse} />
+        </div>
       </div>
-      
-    {/* Chatbot Footer */}
-      <div className="chat-footer"> 
-        <ChatForm chatHistory={chatHistory} setChatHistory={seeChatHistory} generateBotResponse={generateBotResponse} />
-      </div>
+      )}
+
+      {/* Floating toggle button shown when chatbot is closed */}
+      {!open && (
+        <button aria-label="Open chatbot" className={`chatbot-toggle ${closing ? 'closing' : 'open'}`} onClick={handleOpen}>
+          <ChatbotIcon />
+        </button>
+      )}
     </div>
-    )}
+  );
 
-    {/* Floating toggle button shown when chatbot is closed */}
-    {!open && (
-      <button aria-label="Open chatbot" className={`chatbot-toggle ${closing ? 'closing' : 'open'}`} onClick={handleOpen}>
-        <ChatbotIcon />
-      </button>
-    )}
-  </div>
-  
+  return chatUI;
 };
 
-  export default App;
+export default App;
