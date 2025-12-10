@@ -27,17 +27,56 @@ const App = () => {
   const generateBotResponse = async (history) => {
     // For speed, send only the latest user message to the API (smaller payload)
     const last = history[history.length - 1];
-    const contents = [{ role: last.role, parts: [{ text: last.text }] }];
+    // const contents = [{ role: last.role, parts: [{ text: last.text }] }];
+
+    const prompt = 
+      `ur role is to provide clear, supportive, and medically-informed guidance about menstruation, hormonal changes, symptoms, emotional experiences, and common concerns related to the monthly cycle.
+        Guidelines:
+      - Always respond in **2 - 3 sentences maximum**.
+      - Explain concepts in simple, reassuring language suitable for teens and adults.
+      - Normalize menstruation as a natural biological process.
+      - If users feel scared, worried, or confused, validate their feelings and reassure them kindly.
+      - Provide general wellness suggestions such as rest, hydration, warmth, light exercise, and when appropriate, medically standard advice to seek help if symptoms are severe or unusual.
+      - Do **not** diagnose medical conditions; instead, give general educational information.
+      - Remain non-judgmental, empathetic, and comforting at all times.
+      - Avoid graphic details and keep explanations approachable and respectful.
+      - If a question falls outside menstruation, answer briefly and gently redirect back to helpful educational information.
+
+      Your purpose is to educate, comfort, and empower users with trustworthy, easy-to-understand information about the menstrual cycle, don't diagnose but just explain and give suggestions
+      yet reassure them. refer answers from 
+      1. https://journals.physiology.org/doi/full/10.1152/japplphysiol.00346.2023 
+      2. https://www.ijrrjournal.com/IJRR_Vol.11_Issue.4_April2024/IJRR45.pdf 
+      3. https://clinicsearchonline.org/article/impact-of-hormonal-imbalance-during-menstrual-cycle-a-review
+      4. https://internationalmedicaljournal.org/index.php/ijmhsr/article/view/204/208`;
+
+
+    const contents = {
+      contents: [
+          {
+            role: "model",
+            parts: [
+              { text: prompt }
+            ]
+          },
+          {
+            role: "user",
+            parts: [
+              { text: last.text }
+            ]
+          }
+        ]
+    };
 
     const requestOptions = {
       method: "POST",
       headers:{ "Content-Type": "application/json" },
-      body: JSON.stringify({ contents })
+      body: JSON.stringify(contents)
     };
 
     try {
       const response = await fetch(import.meta.env.VITE_API_URL, requestOptions);
       const data = await response.json();
+      console.log(data)
       
       const botMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
       if (botMessage) {
@@ -57,6 +96,7 @@ const App = () => {
           const idx = prev.findIndex(m => m.role === 'model' && m.text === 'Thinking...');
           if (idx !== -1) {
             const next = [...prev];
+            // console.log(next)
             next[idx] = { role: 'model', text: '', fullText: 'Sorry, no valid response.' };
             return next;
           }
