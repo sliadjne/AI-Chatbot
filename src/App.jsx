@@ -130,6 +130,13 @@ const App = () => {
     setIsLoggedIn(true);
   };
 
+  // Handle logout
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    seeChatHistory([]);
+    setOpen(false);
+  };
+
   // Show landing page if not logged in
   if (!isLoggedIn) {
     return <LandingPage onLogin={handleLogin} onGuestAccess={handleGuestAccess} />;
@@ -137,6 +144,9 @@ const App = () => {
 
   const chatUI = (
     <div className="container">
+      <button className="logout-btn" onClick={handleLogout}>
+        ← Logout
+      </button>
       <Dashboard />
       <MenstrualTracker />
       

@@ -283,3 +283,25 @@ body {
 .chatbot-toggle.closing {
   animation: toggleFadeOut 0.2s ease-out forwards;
 }
+
+/* Logout Button */
+.logout-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  padding: 8px 16px;
+  background: rgb(232, 120, 136);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: rgb(204, 99, 115);
+  transform: translateY(-1px);
+}
