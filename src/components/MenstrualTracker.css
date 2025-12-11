@@ -153,6 +153,13 @@
   box-shadow: 0 4px 12px rgba(232, 120, 136, 0.3);
 }
 
+.per-day-entry{background:#fff;border:1px solid #e2e8f0;padding:12px;border-radius:10px;margin-top:18px}
+.per-day-entry h3{margin:0 0 10px 0}
+.tracker-save-btn{background:rgb(232,120,136);color:white;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.entries-list{margin-top:14px}
+.entries-list ul{list-style:none;padding:0;margin:0}
+.entries-list li{padding:6px 0;border-bottom:1px dashed #edf2f7;color:#4a5568}
+
 .phase-info {
   background: #fff9f9;
   border-left: 4px solid rgb(232, 120, 136);

@@ -1,0 +1,40 @@
+.survey-tab{
+	padding: 20px;
+	color: #2d3748;
+	background: transparent;
+}
+.survey-tab h2{
+	margin-bottom: 14px;
+	color: #2d3748;
+}
+.question-area{
+	background: white;
+	padding: 20px;
+	border-radius: 12px;
+	box-shadow: 0 4px 12px rgba(232, 120, 136, 0.06);
+	border: 1px solid #e2e8f0;
+	max-width: 760px;
+}
+.question-count{font-size:13px;color:#718096;margin-bottom:6px}
+.question-text{font-weight:700;margin-bottom:12px;color:#2d3748}
+.question-area input[type="text"], .question-area input[type="number"]{
+	width: 100%;
+	padding: 10px 12px;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+	font-size: 14px;
+	margin-bottom: 12px;
+}
+.options{display:flex;flex-direction:row;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.option-label{
+	display:flex;gap:8px;align-items:center;background:#f7fafc;padding:8px 12px;border-radius:999px;border:1px solid transparent;cursor:pointer;font-weight:600;color:#2d3748
+}
+.option-label input{accent-color: rgb(232, 120, 136);margin-right:6px}
+.option-label input[type="radio"]{margin-right:8px}
+.option-label:hover{background: #fff9f9;border-color: rgb(248, 128, 148)}
+.survey-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.survey-actions button{background: rgb(232, 120, 136);color:white;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.survey-actions button[disabled]{opacity:0.5;cursor:not-allowed}
+.results-area{background:white;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(232,120,136,0.06);border:1px solid #e2e8f0;max-width:760px}
+.survey-note,.results-note{font-size:0.95rem;color:#718096}
+.survey-summary{margin-top:16px;background:white;padding:12px;border-radius:8px;border:1px solid #e2e8f0}

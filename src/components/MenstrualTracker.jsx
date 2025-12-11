@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import './MenstrualTracker.css';
 
-const MenstrualTracker = () => {
-  const [cycleData, setCycleData] = useState({
-    lastPeriodDate: '',
+const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries }) => {
+  const [localData, setLocalData] = useState(cycleData || {
+    lastPeriodDate: '', // period start date (kept for Dashboard compatibility)
+    periodEndDate: '',
+    ongoing: false,
     cycleLength: 28,
     periodLength: 5,
   });
@@ -16,8 +18,7 @@ const MenstrualTracker = () => {
     symptoms: []
   });
 
-  const [symptoms, setSymptoms] = useState([]);
-  const [selectedSymptoms, setSelectedSymptoms] = useState([]);
+  // per-day symptoms are handled in the per-day entry UI
 
   const symptomOptions = [
     'Cramps', 'Bloating', 'Mood Swings', 'Fatigue', 
@@ -25,24 +26,39 @@ const MenstrualTracker = () => {
     'Nausea', 'Food Cravings', 'Anxiety', 'Insomnia'
   ];
 
-  // Calculate cycle phase based on date
+  // Calculate cycle phase based on date and period start/end
   const calculateCyclePhase = () => {
-    if (!cycleData.lastPeriodDate) return;
+    const source = localData || {};
+    if (!source.lastPeriodDate) return;
 
-    const lastPeriod = new Date(cycleData.lastPeriodDate);
+    const start = new Date(source.lastPeriodDate);
     const today = new Date();
-    const daysSinceLastPeriod = Math.floor((today - lastPeriod) / (1000 * 60 * 60 * 24));
-    const dayInCycle = daysSinceLastPeriod % cycleData.cycleLength;
-    const nextPeriodDate = new Date(lastPeriod);
-    nextPeriodDate.setDate(nextPeriodDate.getDate() + cycleData.cycleLength);
+    const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+    const dayInCycle = daysSinceStart % source.cycleLength;
+
+    // Determine if we're currently in the menstruation window using explicit end date or ongoing flag
+    let inMenstruation = false;
+    if (source.ongoing) {
+      if (today >= start) inMenstruation = true;
+    } else if (source.periodEndDate) {
+      const end = new Date(source.periodEndDate);
+      // include end day
+      if (today >= start && today <= end) inMenstruation = true;
+    } else {
+      // fallback to periodLength heuristic
+      if (dayInCycle < source.periodLength) inMenstruation = true;
+    }
+
+    const nextPeriodDate = new Date(start);
+    nextPeriodDate.setDate(nextPeriodDate.getDate() + source.cycleLength);
     const daysUntil = Math.ceil((nextPeriodDate - today) / (1000 * 60 * 60 * 24));
 
     let phase = '';
-    if (dayInCycle < cycleData.periodLength) {
+    if (inMenstruation) {
       phase = 'Menstruation';
-    } else if (dayInCycle < cycleData.cycleLength * 0.33) {
+    } else if (dayInCycle < source.cycleLength * 0.33) {
       phase = 'Follicular';
-    } else if (dayInCycle < cycleData.cycleLength * 0.46) {
+    } else if (dayInCycle < source.cycleLength * 0.46) {
       phase = 'Ovulation';
     } else {
       phase = 'Luteal';
@@ -53,41 +69,54 @@ const MenstrualTracker = () => {
       phase,
       nextPeriod: nextPeriodDate.toLocaleDateString(),
       daysUntilNextPeriod: daysUntil,
-      symptoms: selectedSymptoms
+      symptoms: []
     });
   };
 
   useEffect(() => {
     calculateCyclePhase();
-  }, [cycleData.lastPeriodDate, cycleData.cycleLength, cycleData.periodLength, selectedSymptoms]);
+    // sync local data upwards when changed
+    if (setCycleData) setCycleData(localData);
+  }, [localData.lastPeriodDate, localData.cycleLength, localData.periodLength]);
 
-  const handleDateChange = (e) => {
-    setCycleData(prev => ({
-      ...prev,
-      lastPeriodDate: e.target.value
-    }));
+  const handleStartDateChange = (e) => {
+    setLocalData(prev => ({ ...prev, lastPeriodDate: e.target.value }));
+  };
+
+  const handleEndDateChange = (e) => {
+    setLocalData(prev => ({ ...prev, periodEndDate: e.target.value, ongoing: false }));
+  };
+
+  const toggleOngoing = (e) => {
+    setLocalData(prev => ({ ...prev, ongoing: e.target.checked, periodEndDate: e.target.checked ? '' : prev.periodEndDate }));
   };
 
   const handleCycleLengthChange = (e) => {
-    setCycleData(prev => ({
-      ...prev,
-      cycleLength: parseInt(e.target.value)
-    }));
+    setLocalData(prev => ({ ...prev, cycleLength: parseInt(e.target.value) }));
   };
 
   const handlePeriodLengthChange = (e) => {
-    setCycleData(prev => ({
-      ...prev,
-      periodLength: parseInt(e.target.value)
-    }));
+    setLocalData(prev => ({ ...prev, periodLength: parseInt(e.target.value) }));
   };
 
-  const toggleSymptom = (symptom) => {
-    setSelectedSymptoms(prev =>
-      prev.includes(symptom)
-        ? prev.filter(s => s !== symptom)
-        : [...prev, symptom]
-    );
+  // tracker-level symptom UI removed; per-day symptoms remain
+
+  // Per-day entry form
+  const [entryDate, setEntryDate] = useState('');
+  const [entryMood, setEntryMood] = useState('neutral');
+  const [entrySymptoms, setEntrySymptoms] = useState([]);
+
+  const handleAddEntry = () => {
+    if (!entryDate) return;
+    const key = entryDate;
+    const newEntries = { ...(dayEntries || {}) };
+    newEntries[key] = { mood: entryMood, symptoms: entrySymptoms };
+    if (setDayEntries) setDayEntries(newEntries);
+    setEntryDate(''); setEntryMood('neutral'); setEntrySymptoms([]);
+  };
+
+  const toggleEntrySymptom = (s) => {
+    setEntrySymptoms(prev => prev.includes(s) ? prev.filter(x=>x!==s) : [...prev, s]);
   };
 
   const getPhaseColor = () => {
@@ -111,14 +140,28 @@ const MenstrualTracker = () => {
         <h2 className="tracker-title">🩸 Menstrual Cycle Tracker</h2>
         
         <div className="tracker-form">
-          <div className="form-group">
-            <label>Last Period Date</label>
+            <div className="form-group">
+            <label>Period Start Date</label>
             <input
               type="date"
-              value={cycleData.lastPeriodDate}
-              onChange={handleDateChange}
+              value={localData.lastPeriodDate}
+              onChange={handleStartDateChange}
               className="tracker-input"
             />
+          </div>
+          <div className="form-group">
+            <label>Period End Date</label>
+            <input
+              type="date"
+              value={localData.periodEndDate}
+              onChange={handleEndDateChange}
+              className="tracker-input"
+              disabled={localData.ongoing}
+            />
+            <label style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
+              <input type="checkbox" checked={localData.ongoing} onChange={toggleOngoing} />
+              <span style={{color:'#718096'}}>Period still ongoing</span>
+            </label>
           </div>
 
           <div className="form-row">
@@ -128,7 +171,7 @@ const MenstrualTracker = () => {
                 type="number"
                 min="21"
                 max="35"
-                value={cycleData.cycleLength}
+                value={localData.cycleLength}
                 onChange={handleCycleLengthChange}
                 className="tracker-input"
               />
@@ -139,7 +182,7 @@ const MenstrualTracker = () => {
                 type="number"
                 min="1"
                 max="14"
-                value={cycleData.periodLength}
+                value={localData.periodLength}
                 onChange={handlePeriodLengthChange}
                 className="tracker-input"
               />
@@ -147,7 +190,7 @@ const MenstrualTracker = () => {
           </div>
         </div>
 
-        {cycleData.lastPeriodDate && (
+        {localData.lastPeriodDate && (
           <>
             <div className="cycle-info">
               <div className="info-card">
@@ -168,19 +211,44 @@ const MenstrualTracker = () => {
               </div>
             </div>
 
-            <div className="symptoms-section">
-              <h3 className="symptoms-title">Track Your Symptoms</h3>
+            {/* tracker-level symptom buttons removed; use per-day entries instead */}
+
+            <div className="per-day-entry">
+              <h3>Add / Edit Day Entry</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Date</label>
+                  <input type="date" value={entryDate} onChange={(e)=>setEntryDate(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Mood</label>
+                  <select value={entryMood} onChange={(e)=>setEntryMood(e.target.value)}>
+                    <option value="happy">Happy</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="sad">Sad</option>
+                    <option value="anxious">Anxious</option>
+                    <option value="tired">Tired</option>
+                  </select>
+                </div>
+              </div>
               <div className="symptoms-grid">
                 {symptomOptions.map((symptom) => (
-                  <button
-                    key={symptom}
-                    className={`symptom-btn ${selectedSymptoms.includes(symptom) ? 'active' : ''}`}
-                    onClick={() => toggleSymptom(symptom)}
-                  >
-                    {symptom}
-                  </button>
+                  <button key={symptom} className={`symptom-btn ${entrySymptoms.includes(symptom)?'active':''}`} onClick={()=>toggleEntrySymptom(symptom)}>{symptom}</button>
                 ))}
               </div>
+              <div style={{marginTop:10}}>
+                <button onClick={handleAddEntry} className="tracker-save-btn">Save Entry</button>
+              </div>
+            </div>
+
+            <div className="entries-list">
+              <h3>Month Entries</h3>
+              <ul>
+                {Object.keys(dayEntries || {}).length === 0 && <li>No entries yet.</li>}
+                {Object.entries(dayEntries || {}).map(([date, info]) => (
+                  <li key={date}>{date}: {info.mood} — {info.symptoms.join(', ')}</li>
+                ))}
+              </ul>
             </div>
 
             <div className="phase-info">

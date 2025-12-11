@@ -3,7 +3,7 @@ import { ChatbotIcon } from "./components/ChatbotIcon";
 import ChatForm from "./components/ChatForm";
 import ChatMessage from "./components/ChatMessage";
 import LandingPage from "./components/LandingPage";
-import MenstrualTracker from "./components/MenstrualTracker";
+// MenstrualTracker is now integrated into Dashboard as a tab
 import Dashboard from "./components/Dashboard";
 
 const App = () => {
@@ -148,7 +148,6 @@ const App = () => {
         ← Logout
       </button>
       <Dashboard />
-      <MenstrualTracker />
       
       {/* Chatbot popup rendered only when open */}
       {open && (
