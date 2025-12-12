@@ -1,0 +1,14 @@
+Insert after line 385 (after </div> </div> </div> </div>):
+
+            <div className="cta-section">
+              <div className="cta-card">
+                <div className="cta-icon">💚</div>
+                <div className="cta-content">
+                  <h3>Want to know more about your menstrual health?</h3>
+                  <p>Take our comprehensive survey to get personalized insights and AI-powered health assessment.</p>
+                  <button className="cta-button" onClick={() => setActiveTab('tracker')}>
+                    Start Survey →
+                  </button>
+                </div>
+              </div>
+            </div>

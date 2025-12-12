@@ -231,20 +231,21 @@ const Dashboard = () => {
   // Compute widget metrics from combined sources (survey OR tracker)
   const sourceCycle = getSourceCycle();
 
-  // Current phase using logged data/calendar logic
+  // Current phase using logged data/calendar logic — ONLY if user has entered data
   const today = new Date();
-  const rawPhase = sourceCycle ? phaseForDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0,0,0,0)) : null;
+  const hasUserData = !!(sourceCycle && sourceCycle.startDate);
+  const rawPhase = hasUserData ? phaseForDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0,0,0,0)) : null;
   const phaseLabelMap = {
     menstruation: 'Menstrual',
     follicular: 'Follicular',
     ovulation: 'Ovulation',
     luteal: 'Luteal',
   };
-  const currentPhaseLabel = rawPhase ? (phaseLabelMap[rawPhase] || String(rawPhase)) : surveyMetrics.phase || '—';
+  const currentPhaseLabel = rawPhase ? (phaseLabelMap[rawPhase] || String(rawPhase)) : '—';
 
   // Day of cycle (calculate from startDate if available)
-  let dayOfCycle = surveyMetrics.dayOfCycle || null;
-  if (sourceCycle && sourceCycle.startDate) {
+  let dayOfCycle = null;
+  if (hasUserData && sourceCycle && sourceCycle.startDate) {
     const start = parseLocalDate(sourceCycle.startDate);
     if (start) {
       const diffDays = Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate(),0,0,0,0) - start) / (1000 * 60 * 60 * 24));
@@ -312,7 +313,7 @@ const Dashboard = () => {
           className={`tab-btn ${activeTab === 'dataset' ? 'active' : ''}`}
           onClick={() => setActiveTab('dataset')}
         >
-          📈 Dataset & Analysis
+          📈 AI Insights
         </button>
       </div>
 
@@ -386,6 +387,20 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
+
+            <div className="cta-section">
+              <div className="cta-card">
+                <div className="cta-icon">💚</div>
+                <div className="cta-content">
+                  <h3>Want to know more about your menstrual health?</h3>
+                  <p>Take our short survey to get personalized insights and AI-powered recommendations.</p>
+                  <button className="cta-button" onClick={() => setActiveTab('tracker')}>
+                    Start Survey →
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -400,8 +415,8 @@ const Dashboard = () => {
                   <div className="widget-icon">🔴</div>
                   <div className="widget-content">
                     <h3>Phase</h3>
-                    <p className="widget-value">{currentPhaseLabel}</p>
-                    <span className="widget-meta">Day {dayOfCycle || '–'}</span>
+                    <p className="widget-value">{hasUserData ? currentPhaseLabel : '—'}</p>
+                    <span className="widget-meta">{hasUserData ? `Day ${dayOfCycle || '–'}` : 'No data'}</span>
                   </div>
                 </div>
 
@@ -415,11 +430,20 @@ const Dashboard = () => {
                 </div>
 
                 <div className="widget small">
-                  <div className="widget-icon">⚡</div>
+                  <div className="widget-icon">🤖</div>
                   <div className="widget-content">
-                    <h3>Status</h3>
-                    <p className="widget-value">{hormonalStatus}</p>
-                    <span className="widget-meta">{surveyResults ? surveyResults.prediction : 'Review'}</span>
+                    <h3>AI Assessment</h3>
+                    {mlPrediction ? (
+                      <>
+                        <p className="widget-value">{mlPrediction.riskLevel.toUpperCase()}</p>
+                        <span className="widget-meta">{mlPrediction.prediction === 1 ? 'Possible PCOS' : 'Normal'} ({(mlPrediction.confidence * 100).toFixed(0)}%)</span>
+                      </>
+                    ) : (
+                      <>
+                        <p className="widget-value">—</p>
+                        <span className="widget-meta">Complete survey</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -557,48 +581,42 @@ const Dashboard = () => {
                   <div className="feature-mapping">
                     <h4>Feature Analysis</h4>
                     <div className="features-grid">
-                      <div className="feature-item">
-                        <span className="feature-name">Menstrual Irregularity</span>
-                        <span className="feature-value">{mlPrediction.features.Menstrual_Irregularity === 1 ? 'Irregular' : 'Regular'}</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="feature-name">
-                          BMI {userProfile?.height && userProfile?.weight ? '' : '(Estimated)'}
-                        </span>
-                        <span className="feature-value">
-                          {mlPrediction.features.BMI.toFixed(1)}
-                          {userProfile?.height && userProfile?.weight && (
+                      {cycleData?.lastPeriodDate && (
+                        <div className="feature-item">
+                          <span className="feature-name">Menstrual Irregularity</span>
+                          <span className="feature-value">{mlPrediction.features.Menstrual_Irregularity === 1 ? 'Irregular' : 'Regular'}</span>
+                        </div>
+                      )}
+                      {userProfile?.height && userProfile?.weight && (
+                        <div className="feature-item">
+                          <span className="feature-name">BMI</span>
+                          <span className="feature-value">
+                            {mlPrediction.features.BMI.toFixed(1)}
                             <span style={{fontSize: '11px', color: '#718096', marginLeft: '5px'}}>
-                              (from {userProfile.height}cm, {userProfile.weight}kg)
+                              ({userProfile.height}cm, {userProfile.weight}kg)
                             </span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="feature-name">Testosterone Level (Estimated)</span>
-                        <span className="feature-value">{mlPrediction.features['Testosterone_Level(ng/dL)'].toFixed(1)} ng/dL</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="feature-name">Antral Follicle Count (Estimated)</span>
-                        <span className="feature-value">{mlPrediction.features.Antral_Follicle_Count.toFixed(0)}</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="feature-name">Cycle Length</span>
-                        <span className="feature-value">{mlPrediction.features.cycleLength} days</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="feature-name">
-                          Age {userProfile?.age ? '' : '(Estimated)'}
-                        </span>
-                        <span className="feature-value">
-                          {mlPrediction.features.Age} years
-                          {userProfile?.age && (
-                            <span style={{fontSize: '11px', color: '#718096', marginLeft: '5px'}}>
-                              (from profile)
-                            </span>
-                          )}
-                        </span>
-                      </div>
+                          </span>
+                        </div>
+                      )}
+                      {userProfile?.age && (
+                        <div className="feature-item">
+                          <span className="feature-name">Age</span>
+                          <span className="feature-value">
+                            {mlPrediction.features.Age} years
+                          </span>
+                        </div>
+                      )}
+                      {cycleData?.cycleLength && (
+                        <div className="feature-item">
+                          <span className="feature-name">Cycle Length</span>
+                          <span className="feature-value">{mlPrediction.features.cycleLength} days</span>
+                        </div>
+                      )}
+                      {!cycleData?.lastPeriodDate && !userProfile?.height && !userProfile?.weight && !userProfile?.age && (
+                        <div style={{gridColumn: '1/-1', textAlign: 'center', color: '#a0aec0', padding: '20px', fontSize: '14px'}}>
+                          Enter cycle data and profile info in the "Cycle & Tracker" tab to see feature analysis.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
