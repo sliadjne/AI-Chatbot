@@ -75,9 +75,9 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
 
   useEffect(() => {
     calculateCyclePhase();
-    // sync local data upwards when changed
+    // sync local data upwards when changed (include all date fields)
     if (setCycleData) setCycleData(localData);
-  }, [localData.lastPeriodDate, localData.cycleLength, localData.periodLength]);
+  }, [localData.lastPeriodDate, localData.periodEndDate, localData.ongoing, localData.cycleLength, localData.periodLength, setCycleData]);
 
   const handleStartDateChange = (e) => {
     setLocalData(prev => ({ ...prev, lastPeriodDate: e.target.value }));

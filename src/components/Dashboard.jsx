@@ -12,7 +12,7 @@ const Dashboard = () => {
   const [uploadedData, setUploadedData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [surveyResults, setSurveyResults] = useState(null);
-  const [cycleData, setCycleData] = useState({ lastPeriodDate: '', cycleLength: 28, periodLength: 5 });
+  const [cycleData, setCycleData] = useState({ lastPeriodDate: '', periodEndDate: '', ongoing: false, cycleLength: 28, periodLength: 5 });
   const [dayEntries, setDayEntries] = useState({}); // { '2025-12-11': { mood: 'sad', symptoms: ['Cramps'] }
   const [userProfile, setUserProfile] = useState({ height: '', weight: '', age: '' }); // Height in cm, Weight in kg }
 
@@ -61,25 +61,73 @@ const Dashboard = () => {
     return null;
   };
 
+  // Helper: Parse date string (YYYY-MM-DD format) as local date at midnight
+  const parseLocalDate = (dateString) => {
+    if (!dateString) return null;
+    // Handle both YYYY-MM-DD and MM/DD/YYYY formats
+    let year, month, day;
+    if (dateString.includes('-')) {
+      [year, month, day] = dateString.split('-').map(Number);
+      month = month - 1; // month is 0-indexed in Date constructor
+    } else if (dateString.includes('/')) {
+      [month, day, year] = dateString.split('/').map(Number);
+      month = month - 1; // month is 0-indexed in Date constructor
+    } else {
+      return null;
+    }
+    // Create date at midnight local time
+    return new Date(year, month, day, 0, 0, 0, 0);
+  };
+
   const phaseForDate = (dateObj) => {
     const src = getSourceCycle();
     if (!src || !src.startDate) return null;
-    const start = new Date(src.startDate);
-    const dayDiff = Math.floor((dateObj - start) / (1000 * 60 * 60 * 24));
-    // normalize
+    
+    // Format the calendar date as YYYY-MM-DD string
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const checkDateStr = `${year}-${month}-${day}`;
+    
+    const startDateStr = src.startDate;
+    const endDateStr = src.periodEndDate;
+    
+    // FIRST: Direct comparison for logged period (actual menstruation)
+    if (src.ongoing) {
+      // If ongoing, show menstruation from start date onwards
+      if (checkDateStr >= startDateStr) {
+        return 'menstruation';
+      }
+    } else if (endDateStr) {
+      // If end date is set, show menstruation between start and end (inclusive)
+      if (checkDateStr >= startDateStr && checkDateStr <= endDateStr) {
+        return 'menstruation';
+      }
+    }
+    
+    // SECOND: Calculate other phases based on cycle length
+    // Parse both dates to calculate days between them
+    const start = parseLocalDate(startDateStr);
+    const check = parseLocalDate(checkDateStr);
+    
+    if (!start || !check) return null;
+    
     const cycleLen = src.cycleLength || 28;
     const periodLen = src.periodLength || 5;
-    const dayInCycle = ((dayDiff % cycleLen) + cycleLen) % cycleLen || cycleLen;
-
-    // explicit menstruation window
-    if (src.ongoing && dateObj >= start) return 'menstruation';
-    if (src.periodEndDate) {
-      const end = new Date(src.periodEndDate);
-      if (dateObj >= start && dateObj <= end) return 'menstruation';
-    }
-    if (dayInCycle <= periodLen) return 'menstruation';
-    if (dayInCycle <= 13) return 'follicular';
-    if (dayInCycle <= 16) return 'ovulation';
+    
+    // Calculate days from start
+    const daysSinceStart = Math.floor((check - start) / (1000 * 60 * 60 * 24));
+    
+    // If we're in the past before the cycle start, no phase
+    if (daysSinceStart < 0) return null;
+    
+    // Get day in current cycle (0-indexed)
+    const dayInCycle = daysSinceStart % cycleLen;
+    
+    // Determine phase based on day in cycle
+    if (dayInCycle < periodLen) return 'menstruation';
+    if (dayInCycle < 13) return 'follicular';
+    if (dayInCycle < 16) return 'ovulation';
     return 'luteal';
   };
 
@@ -323,7 +371,8 @@ const Dashboard = () => {
                     if (day === null) return <div key={index} className={`calendar-day empty`}></div>;
                     const year = selectedDate.getFullYear();
                     const month = selectedDate.getMonth();
-                    const dateObj = new Date(year, month, day);
+                    // Create date at midnight to match phaseForDate comparison
+                    const dateObj = new Date(year, month, day, 0, 0, 0, 0);
                     const dateKey = formatDateKey(year, month, day);
                     const hasEntry = !!(dayEntries && dayEntries[dateKey]);
                     const phase = phaseForDate(dateObj);
