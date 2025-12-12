@@ -208,6 +208,66 @@
   gap: 20px;
 }
 
+/* Overview summary compact cards */
+.overview-summary { margin-top:18px; padding-top:12px; }
+.summary-cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.summary-card {
+  background: white;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(226,232,240,0.9);
+  box-shadow: 0 6px 18px rgba(232,120,136,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+  max-width: 220px;
+}
+.summary-card.half { max-width: 140px; }
+.summary-card h4 {
+  font-size: 11px;
+  color: #718096;
+  margin: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.summary-card .summary-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: rgb(232,120,136);
+  margin-top: 2px;
+}
+.summary-card .summary-value-muted { font-size: 14px; color: #2d3748; font-weight:700 }
+.summary-card .summary-meta {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.summary-card .detail-row { display:flex; gap:8px; align-items:center; }
+.summary-card .pill { background: rgba(232,120,136,0.06); color: rgb(232,120,136); padding:4px 8px; border-radius: 999px; font-weight:700; font-size:12px; }
+.summary-card .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+@media (max-width: 900px) {
+  .summary-cards { gap: 8px; }
+  .summary-card { max-width: 180px; }
+}
+
+@media (max-width: 520px) {
+  .summary-cards { gap: 8px; }
+  .summary-card { min-width: 46%; max-width: 48%; padding: 9px; }
+}
+
+@media (max-width: 380px) {
+  .summary-cards { gap: 8px; }
+  .summary-card { min-width: 100%; max-width: 100%; }
+}
+
 .metric-card {
   padding: 15px;
 }

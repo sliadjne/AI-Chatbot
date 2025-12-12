@@ -228,6 +228,65 @@ const Dashboard = () => {
     }
   }, [mlPrediction, setMlPrediction, setUserFeatures]);
 
+  // Compute widget metrics from combined sources (survey OR tracker)
+  const sourceCycle = getSourceCycle();
+
+  // Current phase using logged data/calendar logic
+  const today = new Date();
+  const rawPhase = sourceCycle ? phaseForDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0,0,0,0)) : null;
+  const phaseLabelMap = {
+    menstruation: 'Menstrual',
+    follicular: 'Follicular',
+    ovulation: 'Ovulation',
+    luteal: 'Luteal',
+  };
+  const currentPhaseLabel = rawPhase ? (phaseLabelMap[rawPhase] || String(rawPhase)) : surveyMetrics.phase || '—';
+
+  // Day of cycle (calculate from startDate if available)
+  let dayOfCycle = surveyMetrics.dayOfCycle || null;
+  if (sourceCycle && sourceCycle.startDate) {
+    const start = parseLocalDate(sourceCycle.startDate);
+    if (start) {
+      const diffDays = Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate(),0,0,0,0) - start) / (1000 * 60 * 60 * 24));
+      const cycleLen = Number(sourceCycle.cycleLength) || 28;
+      dayOfCycle = (((diffDays % cycleLen) + cycleLen) % cycleLen) + 1; // 1-indexed
+    }
+  }
+
+  const calculateNextPeriod = () => {
+    if (!sourceCycle || !sourceCycle.startDate) return null;
+    const cycleLen = Number(sourceCycle.cycleLength) || 28;
+    // Prefer periodEndDate if ongoing/available
+    const baseStr = sourceCycle.ongoing && sourceCycle.periodEndDate ? sourceCycle.periodEndDate : sourceCycle.startDate;
+    const base = parseLocalDate(baseStr);
+    if (!base) return null;
+    const predicted = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    predicted.setDate(predicted.getDate() + cycleLen);
+    return predicted;
+  };
+
+  const nextPeriodDate = calculateNextPeriod();
+  const nextPeriodDisplay = nextPeriodDate ? nextPeriodDate.toLocaleDateString() : '–';
+  const daysUntilNext = nextPeriodDate ? Math.ceil((new Date(nextPeriodDate.getFullYear(), nextPeriodDate.getMonth(), nextPeriodDate.getDate(),0,0,0,0) - new Date(today.getFullYear(), today.getMonth(), today.getDate(),0,0,0,0)) / (1000 * 60 * 60 * 24)) : null;
+
+  // Overview summary helpers
+  const formatLocalFromYMD = (ymd) => {
+    if (!ymd) return '–';
+    const d = parseLocalDate(ymd);
+    return d ? d.toLocaleDateString() : '–';
+  };
+
+  const getMostRecentEntry = () => {
+    const keys = Object.keys(dayEntries || {});
+    if (!keys.length) return null;
+    // keys are YYYY-MM-DD — sort lexicographically
+    keys.sort();
+    const k = keys[keys.length - 1];
+    return { date: k, entry: dayEntries[k] };
+  };
+
+  const recentEntry = getMostRecentEntry();
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -287,6 +346,46 @@ const Dashboard = () => {
                 <span className="metric-label">{dataCompletenessPercent}%</span>
               </div>
             </div>
+            <div className="overview-summary">
+              <h3>Summary</h3>
+              <div className="summary-cards">
+                <div className="summary-card">
+                  <h4>Phase</h4>
+                  <div className="summary-value">{currentPhaseLabel}</div>
+                  <div className="summary-meta">Day {dayOfCycle || '–'}</div>
+                </div>
+
+                <div className="summary-card">
+                  <h4>Next Period</h4>
+                  <div className="summary-value">{nextPeriodDisplay}</div>
+                  <div className="summary-meta">{daysUntilNext !== null ? `${daysUntilNext} days` : '—'}</div>
+                </div>
+
+                <div className="summary-card">
+                  <h4>Status</h4>
+                  <div className="summary-value">{hormonalStatus}</div>
+                  <div className="summary-meta">{surveyResults ? surveyResults.prediction : 'No survey'}</div>
+                </div>
+
+                <div className="summary-card">
+                  <h4>Points</h4>
+                  <div className="summary-value">{dataPointsCount}</div>
+                  <div className="summary-meta">Entries</div>
+                </div>
+
+                <div className="summary-card">
+                  <h4>Last Period</h4>
+                  <div className="summary-value">{formatLocalFromYMD(getSourceCycle()?.startDate)}</div>
+                  <div className="summary-meta">Length {getSourceCycle()?.cycleLength || '–'} days</div>
+                </div>
+
+                <div className="summary-card">
+                  <h4>Recent Entry</h4>
+                  <div className="summary-value">{recentEntry ? formatLocalFromYMD(recentEntry.date) : 'No entries'}</div>
+                  <div className="summary-meta">{recentEntry ? (recentEntry.entry.mood || Object.keys(recentEntry.entry.symptoms || {}).length ? (recentEntry.entry.symptoms || []).join(', ') : '—') : ''}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -301,8 +400,8 @@ const Dashboard = () => {
                   <div className="widget-icon">🔴</div>
                   <div className="widget-content">
                     <h3>Phase</h3>
-                    <p className="widget-value">{surveyMetrics.phase}</p>
-                    <span className="widget-meta">Day {surveyMetrics.dayOfCycle}</span>
+                    <p className="widget-value">{currentPhaseLabel}</p>
+                    <span className="widget-meta">Day {dayOfCycle || '–'}</span>
                   </div>
                 </div>
 
@@ -310,8 +409,8 @@ const Dashboard = () => {
                   <div className="widget-icon">⏰</div>
                   <div className="widget-content">
                     <h3>Next</h3>
-                    <p className="widget-value">{surveyResults ? Math.max(0, (Number(surveyResults.answers?.cycle_length || 28) - surveyMetrics.dayOfCycle)) + 'd' : '–'}</p>
-                    <span className="widget-meta">Next period</span>
+                    <p className="widget-value">{nextPeriodDisplay}</p>
+                    <span className="widget-meta">{daysUntilNext !== null ? `${daysUntilNext}d` : 'Next period'}</span>
                   </div>
                 </div>
 
