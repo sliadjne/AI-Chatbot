@@ -1,36 +1,40 @@
 .tracker-container {
   width: 100%;
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 0 20px;
+  margin: 0;
+  padding: 0;
 }
 
 .tracker-card {
-  background: white;
-  border-radius: 15px;
-  padding: 30px;
-  box-shadow: 0 8px 24px rgba(232, 120, 136, 0.15);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .tracker-title {
-  text-align: center;
+  text-align: left;
   color: rgb(232, 120, 136);
-  margin-bottom: 25px;
-  font-size: 24px;
+  margin-bottom: 15px;
+  font-size: 18px;
   font-weight: 700;
 }
 
 .tracker-form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 25px;
+  gap: 12px;
+  margin-bottom: 15px;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 12px;
+}
+
+.form-row.profile-row {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .form-group {
@@ -43,6 +47,21 @@
   font-size: 14px;
   font-weight: 600;
   color: #2d3748;
+}
+
+.form-group.profile-input {
+  flex: 1;
+}
+
+.profile-field {
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+  border: 1.5px solid #cbd5e0 !important;
+}
+
+.profile-field:focus {
+  border-color: rgb(232, 120, 136) !important;
+  box-shadow: 0 0 0 3px rgba(232, 120, 136, 0.1) !important;
 }
 
 .tracker-input {
@@ -124,17 +143,18 @@
 
 .symptoms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .symptom-btn {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1.5px solid #cbd5e0;
   border-radius: 8px;
   background: white;
   color: #2d3748;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -153,12 +173,87 @@
   box-shadow: 0 4px 12px rgba(232, 120, 136, 0.3);
 }
 
-.per-day-entry{background:#fff;border:1px solid #e2e8f0;padding:12px;border-radius:10px;margin-top:18px}
-.per-day-entry h3{margin:0 0 10px 0}
-.tracker-save-btn{background:rgb(232,120,136);color:white;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-.entries-list{margin-top:14px}
-.entries-list ul{list-style:none;padding:0;margin:0}
-.entries-list li{padding:6px 0;border-bottom:1px dashed #edf2f7;color:#4a5568}
+.user-profile-section{background:#f7fafc;border:1px solid #e2e8f0;padding:15px;border-radius:10px;margin-top:18px;margin-bottom:18px}
+.user-profile-section h3{margin:0 0 8px 0;font-size:16px;font-weight:700;color:#2d3748}
+.per-day-entry {
+  background: linear-gradient(135deg, #f7fafc 0%, #fff9f9 100%);
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+.per-day-entry h3 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.per-day-entry .form-row {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.per-day-entry .form-group {
+  gap: 6px;
+}
+
+.per-day-entry .form-group label {
+  font-size: 13px;
+}
+
+.per-day-entry .tracker-input,
+.per-day-entry select {
+  padding: 9px 11px;
+  font-size: 13px;
+}
+
+.tracker-save-btn {
+  background: linear-gradient(135deg, rgb(232, 120, 136) 0%, rgb(220, 100, 120) 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.tracker-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(232, 120, 136, 0.3);
+}
+
+.entries-list {
+  margin-top: 12px;
+  background: #f7fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.entries-list h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.entries-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.entries-list li {
+  padding: 6px 0;
+  border-bottom: 1px dashed #edf2f7;
+  color: #4a5568;
+  font-size: 12px;
+}
 
 .phase-info {
   background: #fff9f9;
@@ -195,6 +290,10 @@
   }
 
   .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row.profile-row {
     grid-template-columns: 1fr;
   }
 

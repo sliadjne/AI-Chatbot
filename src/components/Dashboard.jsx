@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import './Dashboard.css';
 import SurveyTab from './SurveyTab';
 import MenstrualTracker from './MenstrualTracker';
+import CycleVisualizations from './CycleVisualizations';
+import { mapUserDataToFeatures, predictPCOS } from '../utils/mlPrediction';
+import { useMLPrediction } from '../context/MLPredictionContext';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -10,7 +13,8 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [surveyResults, setSurveyResults] = useState(null);
   const [cycleData, setCycleData] = useState({ lastPeriodDate: '', cycleLength: 28, periodLength: 5 });
-  const [dayEntries, setDayEntries] = useState({}); // { '2025-12-11': { mood: 'sad', symptoms: ['Cramps'] } }
+  const [dayEntries, setDayEntries] = useState({}); // { '2025-12-11': { mood: 'sad', symptoms: ['Cramps'] }
+  const [userProfile, setUserProfile] = useState({ height: '', weight: '', age: '' }); // Height in cm, Weight in kg }
 
   // Generate calendar days
   const getDaysInMonth = (date) => {
@@ -156,6 +160,25 @@ const Dashboard = () => {
   const cycleRegularityPercent = surveyResults ? (surveyResults.answers?.regularity === 'regular' ? 95 : 40) : 75;
   const symptomSeverityPercent = surveyResults ? Math.min(100, (surveyResults.vector?.[2] || 0) * 10) : 55;
   const dataCompletenessPercent = Math.min(100, 50 + Math.floor((uploadedData.length / 10) * 50));
+
+  const { setMlPrediction, setUserFeatures } = useMLPrediction();
+
+  // Calculate ML prediction
+  const mlPrediction = useMemo(() => {
+    if (!surveyResults && !cycleData?.lastPeriodDate) {
+      return null;
+    }
+    const features = mapUserDataToFeatures(surveyResults, cycleData, dayEntries, userProfile);
+    return predictPCOS(features);
+  }, [surveyResults, cycleData, dayEntries, userProfile]);
+
+  // Update context when prediction changes
+  useEffect(() => {
+    if (mlPrediction) {
+      setMlPrediction(mlPrediction);
+      setUserFeatures(mlPrediction.features);
+    }
+  }, [mlPrediction, setMlPrediction, setUserFeatures]);
 
   return (
     <div className="dashboard-container">
@@ -336,6 +359,8 @@ const Dashboard = () => {
                   setCycleData={setCycleData}
                   dayEntries={dayEntries}
                   setDayEntries={setDayEntries}
+                  userProfile={userProfile}
+                  setUserProfile={setUserProfile}
                 />
               </div>
             </div>
@@ -347,91 +372,122 @@ const Dashboard = () => {
       {activeTab === 'dataset' && (
         <div className="tab-content">
           <div className="dataset-section">
-            <h2>📂 Dataset Management</h2>
+            <h2>📈 AI Analysis & Insights</h2>
             
-            <div className="upload-area">
-              <input
-                type="file"
-                id="file-input"
-                accept=".json,.csv"
-                onChange={handleFileUpload}
-                className="file-input"
-              />
-              <label htmlFor="file-input" className="upload-label">
-                <div className="upload-icon">📤</div>
-                <p>Drag and drop your dataset or click to upload</p>
-                <span className="upload-hint">JSON or CSV format</span>
-              </label>
-            </div>
-
-            {datasetFile && (
-              <div className="file-info">
-                <h3>✅ File Uploaded</h3>
-                <p className="file-name">{datasetFile.name}</p>
-                <p className="file-size">{(datasetFile.size / 1024).toFixed(2)} KB</p>
+            {/* AI Prediction Section */}
+            {!mlPrediction ? (
+              <div className="analysis-placeholder">
+                <p>Complete the survey or enter cycle data in the "Cycle & Tracker" tab to get AI-powered insights.</p>
+              </div>
+            ) : (
+              <div className="ai-analysis-section">
+                <div className="prediction-card">
+                  <h3>🤖 AI Health Assessment</h3>
+                  <div className="prediction-result">
+                    <div className={`risk-badge ${mlPrediction.riskLevel}`}>
+                      <span className="risk-label">Risk Level:</span>
+                      <span className="risk-value">{mlPrediction.riskLevel.toUpperCase()}</span>
+                    </div>
+                    <div className="prediction-details">
+                      <div className="prediction-item">
+                        <span className="prediction-label">Prediction:</span>
+                        <span className="prediction-value">
+                          {mlPrediction.prediction === 1 ? 'Possible PCOS Pattern' : 'Normal Pattern'}
+                        </span>
+                      </div>
+                      <div className="prediction-item">
+                        <span className="prediction-label">Confidence:</span>
+                        <span className="prediction-value">{(mlPrediction.confidence * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="prediction-item">
+                        <span className="prediction-label">Risk Score:</span>
+                        <span className="prediction-value">{mlPrediction.riskScore}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="feature-mapping">
+                    <h4>Feature Analysis</h4>
+                    <div className="features-grid">
+                      <div className="feature-item">
+                        <span className="feature-name">Menstrual Irregularity</span>
+                        <span className="feature-value">{mlPrediction.features.Menstrual_Irregularity === 1 ? 'Irregular' : 'Regular'}</span>
+                      </div>
+                      <div className="feature-item">
+                        <span className="feature-name">
+                          BMI {userProfile?.height && userProfile?.weight ? '' : '(Estimated)'}
+                        </span>
+                        <span className="feature-value">
+                          {mlPrediction.features.BMI.toFixed(1)}
+                          {userProfile?.height && userProfile?.weight && (
+                            <span style={{fontSize: '11px', color: '#718096', marginLeft: '5px'}}>
+                              (from {userProfile.height}cm, {userProfile.weight}kg)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="feature-item">
+                        <span className="feature-name">Testosterone Level (Estimated)</span>
+                        <span className="feature-value">{mlPrediction.features['Testosterone_Level(ng/dL)'].toFixed(1)} ng/dL</span>
+                      </div>
+                      <div className="feature-item">
+                        <span className="feature-name">Antral Follicle Count (Estimated)</span>
+                        <span className="feature-value">{mlPrediction.features.Antral_Follicle_Count.toFixed(0)}</span>
+                      </div>
+                      <div className="feature-item">
+                        <span className="feature-name">Cycle Length</span>
+                        <span className="feature-value">{mlPrediction.features.cycleLength} days</span>
+                      </div>
+                      <div className="feature-item">
+                        <span className="feature-name">
+                          Age {userProfile?.age ? '' : '(Estimated)'}
+                        </span>
+                        <span className="feature-value">
+                          {mlPrediction.features.Age} years
+                          {userProfile?.age && (
+                            <span style={{fontSize: '11px', color: '#718096', marginLeft: '5px'}}>
+                              (from profile)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Insights Section */}
+                <div className="insights-section">
+                  <h3>💡 Personalized Insights & Recommendations</h3>
+                  <div className="insights-list">
+                    {mlPrediction.insights.map((insight, idx) => (
+                      <div key={idx} className={`insight-card ${insight.type}`}>
+                        <div className="insight-icon">
+                          {insight.type === 'warning' && '⚠️'}
+                          {insight.type === 'suggestion' && '💡'}
+                          {insight.type === 'info' && 'ℹ️'}
+                        </div>
+                        <div className="insight-content">
+                          <h4>{insight.title}</h4>
+                          <p>{insight.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
-
-            {uploadedData.length > 0 && (
-              <div className="data-preview">
-                <h3>📊 Data Preview</h3>
-                <div className="data-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        {uploadedData[0] && Object.keys(uploadedData[0]).map((key) => (
-                          <th key={key}>{key}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {uploadedData.slice(0, 5).map((row, idx) => (
-                        <tr key={idx}>
-                          {Object.values(row).map((val, i) => (
-                            <td key={i}>{String(val).substring(0, 30)}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {uploadedData.length > 5 && (
-                    <p className="data-count">Showing 5 of {uploadedData.length} records</p>
-                  )}
-                </div>
+            
+            {/* Cycle Visualizations */}
+            {(surveyResults || cycleData?.lastPeriodDate) && (
+              <div className="visualizations-section">
+                <h3>📊 Cycle Phase Visualizations</h3>
+                <CycleVisualizations 
+                  cycleData={cycleData} 
+                  surveyResults={surveyResults} 
+                  selectedDate={selectedDate}
+                />
               </div>
             )}
-
-            <div className="data-guidelines">
-              <h3>📋 Data Format Guidelines</h3>
-              <div className="guidelines-grid">
-                <div className="guideline-card">
-                  <h4>Required Fields</h4>
-                  <ul>
-                    <li>Date (YYYY-MM-DD)</li>
-                    <li>Hormone Level (numeric)</li>
-                    <li>Cycle Phase</li>
-                  </ul>
-                </div>
-
-                <div className="guideline-card">
-                  <h4>Optional Fields</h4>
-                  <ul>
-                    <li>Symptoms (text)</li>
-                    <li>Flow Intensity</li>
-                    <li>Mood Rating</li>
-                  </ul>
-                </div>
-
-                <div className="guideline-card">
-                  <h4>Sample JSON</h4>
-                  <pre>{`{
-  "date": "2025-12-09",
-  "hormone_level": 45.5,
-  "phase": "Luteal"
-}`}</pre>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

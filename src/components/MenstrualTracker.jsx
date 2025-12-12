@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './MenstrualTracker.css';
 
-const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries }) => {
+const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile }) => {
   const [localData, setLocalData] = useState(cycleData || {
     lastPeriodDate: '', // period start date (kept for Dashboard compatibility)
     periodEndDate: '',
@@ -101,10 +101,25 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries }
 
   // tracker-level symptom UI removed; per-day symptoms remain
 
-  // Per-day entry form
   const [entryDate, setEntryDate] = useState('');
   const [entryMood, setEntryMood] = useState('neutral');
   const [entrySymptoms, setEntrySymptoms] = useState([]);
+  const [localProfile, setLocalProfile] = useState(userProfile || { height: '', weight: '', age: '' });
+
+  const handleHeightChange = (e) => {
+    setLocalProfile(prev => ({ ...prev, height: e.target.value }));
+    if (setUserProfile) setUserProfile(prev => ({ ...prev, height: e.target.value }));
+  };
+
+  const handleWeightChange = (e) => {
+    setLocalProfile(prev => ({ ...prev, weight: e.target.value }));
+    if (setUserProfile) setUserProfile(prev => ({ ...prev, weight: e.target.value }));
+  };
+
+  const handleAgeChange = (e) => {
+    setLocalProfile(prev => ({ ...prev, age: e.target.value }));
+    if (setUserProfile) setUserProfile(prev => ({ ...prev, age: e.target.value }));
+  };
 
   const handleAddEntry = () => {
     if (!entryDate) return;
@@ -212,6 +227,53 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries }
             </div>
 
             {/* tracker-level symptom buttons removed; use per-day entries instead */}
+
+            <div className="user-profile-section">
+              <h3>👤 Your Profile (for AI Analysis)</h3>
+              <p style={{fontSize: '13px', color: '#718096', marginBottom: '15px'}}>
+                Enter your height, weight, and age to get more accurate health assessments in the Dataset & Analysis tab.
+              </p>
+              <div className="form-row profile-row">
+                <div className="form-group profile-input">
+                  <label>Height (cm)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={localProfile?.height || ''}
+                    onChange={handleHeightChange}
+                    placeholder="e.g., 165"
+                    className="tracker-input profile-field"
+                  />
+                </div>
+                <div className="form-group profile-input">
+                  <label>Weight (kg)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={localProfile?.weight || ''}
+                    onChange={handleWeightChange}
+                    placeholder="e.g., 60"
+                    className="tracker-input profile-field"
+                  />
+                </div>
+                <div className="form-group profile-input">
+                  <label>Age (years)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={localProfile?.age || ''}
+                    onChange={handleAgeChange}
+                    placeholder="e.g., 28"
+                    className="tracker-input profile-field"
+                  />
+                </div>
+              </div>
+              {userProfile?.height && userProfile?.weight && (
+                <div style={{marginTop: '10px', padding: '10px', background: '#f7fafc', borderRadius: '6px'}}>
+                  <strong>Calculated BMI:</strong> {((Number(userProfile.weight) / Math.pow(Number(userProfile.height) / 100, 2))).toFixed(1)}
+                </div>
+              )}
+            </div>
 
             <div className="per-day-entry">
               <h3>Add / Edit Day Entry</h3>

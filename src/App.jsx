@@ -5,12 +5,14 @@ import ChatMessage from "./components/ChatMessage";
 import LandingPage from "./components/LandingPage";
 // MenstrualTracker is now integrated into Dashboard as a tab
 import Dashboard from "./components/Dashboard";
+import { MLPredictionProvider, useMLPrediction } from "./context/MLPredictionContext";
 
-const App = () => {
+const AppContent = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [chatHistory, seeChatHistory] = useState([]);
   const [open, setOpen] = useState(true);
   const [closing, setClosing] = useState(false);
+  const { mlPrediction, userFeatures } = useMLPrediction();
 
   const handleClose = () => {
     setClosing(true);
@@ -27,7 +29,20 @@ const App = () => {
   const generateBotResponse = async (history) => {
     // For speed, send only the latest user message to the API (smaller payload)
     const last = history[history.length - 1];
-    // const contents = [{ role: last.role, parts: [{ text: last.text }] }];
+    
+    // Build personalized context from ML prediction
+    let userContext = '';
+    if (mlPrediction && userFeatures) {
+      userContext = `\n\nUser's Health Context (for personalized guidance):
+- Cycle Pattern: ${mlPrediction.prediction === 1 ? 'Possible PCOS pattern detected' : 'Normal pattern'}
+- Risk Level: ${mlPrediction.riskLevel}
+- Cycle Length: ${userFeatures.cycleLength} days
+- Menstrual Regularity: ${userFeatures.Menstrual_Irregularity === 1 ? 'Irregular' : 'Regular'}
+- Estimated BMI: ${userFeatures.BMI.toFixed(1)}
+- Current Phase: Based on cycle data
+
+Use this context to provide more personalized, relevant advice. If the user has irregular cycles or possible PCOS pattern, suggest lifestyle modifications, stress management, and when appropriate, mention consulting healthcare professionals. Always maintain a supportive, non-diagnostic tone.`;
+    }
 
     const prompt = 
       `ur role is to provide clear, supportive, and medically-informed guidance about menstruation, hormonal changes, symptoms, emotional experiences, and common concerns related to the monthly cycle.
@@ -47,7 +62,7 @@ const App = () => {
       1. https://journals.physiology.org/doi/full/10.1152/japplphysiol.00346.2023 
       2. https://www.ijrrjournal.com/IJRR_Vol.11_Issue.4_April2024/IJRR45.pdf 
       3. https://clinicsearchonline.org/article/impact-of-hormonal-imbalance-during-menstrual-cycle-a-review
-      4. https://internationalmedicaljournal.org/index.php/ijmhsr/article/view/204/208`;
+      4. https://internationalmedicaljournal.org/index.php/ijmhsr/article/view/204/208${userContext}`;
 
 
     const contents = {
@@ -193,6 +208,14 @@ const App = () => {
   );
 
   return chatUI;
+};
+
+const App = () => {
+  return (
+    <MLPredictionProvider>
+      <AppContent />
+    </MLPredictionProvider>
+  );
 };
 
 export default App;
