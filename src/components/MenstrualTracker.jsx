@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './MenstrualTracker.css';
 
-const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile }) => {
+const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile, onPeriodLogged, nextPeriodDate, daysUntilNext, isNextPeriodToday, monthlyLogs, prefillDate }) => {
   const [localData, setLocalData] = useState(cycleData || {
     lastPeriodDate: '', // period start date (kept for Dashboard compatibility)
     periodEndDate: '',
@@ -77,6 +77,10 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     calculateCyclePhase();
     // sync local data upwards when changed (include all date fields)
     if (setCycleData) setCycleData(localData);
+    // Inform parent/dashboard about actual period logs when date is present
+    if (onPeriodLogged && localData.lastPeriodDate) {
+      onPeriodLogged(localData.lastPeriodDate, localData.periodEndDate || null);
+    }
   }, [localData.lastPeriodDate, localData.periodEndDate, localData.ongoing, localData.cycleLength, localData.periodLength, setCycleData]);
 
   const handleStartDateChange = (e) => {
@@ -129,6 +133,13 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     if (setDayEntries) setDayEntries(newEntries);
     setEntryDate(''); setEntryMood('neutral'); setEntrySymptoms([]);
   };
+
+  // If parent requests prefill for a specific month, set the entry date to that prefill
+  useEffect(() => {
+    if (prefillDate) {
+      setEntryDate(prefillDate);
+    }
+  }, [prefillDate]);
 
   const toggleEntrySymptom = (s) => {
     setEntrySymptoms(prev => prev.includes(s) ? prev.filter(x=>x!==s) : [...prev, s]);
@@ -221,8 +232,8 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
 
               <div className="info-card">
                 <h3>Next Period</h3>
-                <p className="next-period-date">{cycleInfo.nextPeriod}</p>
-                <p className="days-until">{cycleInfo.daysUntilNextPeriod} days away</p>
+                <p className="next-period-date">{nextPeriodDate ? nextPeriodDate.toLocaleDateString() : cycleInfo.nextPeriod}</p>
+                <p className="days-until">{typeof daysUntilNext === 'number' ? (isNextPeriodToday ? 'Today' : `${daysUntilNext} days away`) : `${cycleInfo.daysUntilNextPeriod} days away`}</p>
               </div>
             </div>
 
@@ -277,6 +288,21 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
 
             <div className="per-day-entry">
               <h3>Add / Edit Day Entry</h3>
+              <div className="month-summary">
+                <strong>This month’s cycle summary</strong>
+                <div style={{fontSize:13,color:'#64748b',marginTop:6}}>
+                  {(() => {
+                    const keyDate = entryDate || prefillDate || new Date().toISOString().slice(0,10);
+                    const [y,m] = keyDate.split('-');
+                    const monthKey = `${y}-${m}`;
+                    const log = monthlyLogs?.[monthKey];
+                    if (!log) return 'No monthly log for this month.';
+                    const pred = log.predictedStart ? `${new Date(log.predictedStart).toLocaleDateString()} → ${new Date(log.predictedEnd).toLocaleDateString()}` : 'Predicted: —';
+                    const act = log.actualStart ? `${new Date(log.actualStart).toLocaleDateString()} → ${new Date(log.actualEnd).toLocaleDateString()}` : 'Actual: Not logged yet';
+                    return `${pred} · ${act}`;
+                  })()}
+                </div>
+              </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Date</label>

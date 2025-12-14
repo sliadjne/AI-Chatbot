@@ -30,10 +30,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: center;
+  width: 100%;
 }
 
 .form-row.profile-row {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -57,6 +59,10 @@
   padding: 10px 12px !important;
   font-size: 14px !important;
   border: 1.5px solid #cbd5e0 !important;
+  min-width: 0;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
 }
 
 .profile-field:focus {
@@ -146,6 +152,7 @@
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
   margin-bottom: 12px;
+  width: 100%;
 }
 
 .symptom-btn {
@@ -173,15 +180,19 @@
   box-shadow: 0 4px 12px rgba(232, 120, 136, 0.3);
 }
 
-.user-profile-section{background:#f7fafc;border:1px solid #e2e8f0;padding:15px;border-radius:10px;margin-top:18px;margin-bottom:18px}
+.user-profile-section{background:#fff; border-radius:12px;border:1px solid rgba(226,232,240,0.9);padding:16px;margin-top:18px;margin-bottom:18px;width:100%;max-width:420px;margin:0 auto;box-shadow: 0 6px 18px rgba(15,23,42,0.04)}
 .user-profile-section h3{margin:0 0 8px 0;font-size:16px;font-weight:700;color:#2d3748}
 .per-day-entry {
-  background: linear-gradient(135deg, #f7fafc 0%, #fff9f9 100%);
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #fff 0%, #fff9f9 100%);
+  border: 1px solid rgba(226,232,240,1);
   padding: 16px;
   border-radius: 12px;
   margin-top: 18px;
   margin-bottom: 18px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
 }
 
 .per-day-entry h3 {

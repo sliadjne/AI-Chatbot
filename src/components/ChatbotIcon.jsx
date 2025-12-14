@@ -1,4 +1,4 @@
-import PennlyLogo from "C:/AI/src/components/Pennly_logo.png";
+import PennlyLogo from "./Pennly_logo.png";
 
 export const ChatbotIcon = () => {
   return (

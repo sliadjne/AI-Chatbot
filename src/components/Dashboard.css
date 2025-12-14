@@ -38,60 +38,83 @@
 /* Tabs */
 .dashboard-tabs {
   display: flex;
-  gap: 0;
+  gap: 12px;
   margin-bottom: 0;
-  border-right: 2px solid #e2e8f0;
-  overflow-y: auto;
-  margin-top: 100px;
-  padding: 20px 0;
+  padding: 16px 12px;
   flex-direction: column;
   width: 200px;
   min-width: 200px;
-  border-bottom: none;
-  background: white;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #fff9fb);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(226,232,240,0.9);
   position: sticky;
-  top: 0;
-  height: calc(100vh - 100px);
+  top: 100px; /* keep below header */
+  height: calc(100vh - 120px);
 }
 
 .tab-btn {
-  padding: 12px 20px;
-  background: none;
+  padding: 12px 14px;
+  background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
   font-size: 15px;
-  font-weight: 600;
-  color: #718096;
+  font-weight: 700;
+  color: #4a5568;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(.2,.9,.2,1);
   white-space: nowrap;
   text-align: left;
-  border-right: 3px solid transparent;
-  border-bottom: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 22px;
+  position: relative;
 }
-
+.tab-btn::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+.tab-btn.active::before { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.08);}
 .tab-btn:hover {
   color: rgb(232, 120, 136);
+  transform: none; /* don't shift layout on hover */
 }
 
 .tab-btn.active {
-  color: rgb(232, 120, 136);
-  border-right-color: rgb(232, 120, 136);
+  color: #fff;
+  background: linear-gradient(90deg, rgba(232,120,136,0.95), rgba(242,144,164,0.95));
+  box-shadow: 0 6px 18px rgba(232, 120, 136, 0.12);
+  border: none;
 }
 
 .tab-content {
   animation: fadeIn 0.3s ease-in;
   flex: 1;
-  margin-top: 100px;
+  margin-top: 100px; /* compensate for fixed header */
   padding: 30px;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
 }
 
+.tab-content-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* Tracker combined layout */
 .tracker-layout{
   display:grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 420px;
   grid-template-rows: auto auto;
   gap:18px;
   align-items:start;
@@ -107,9 +130,16 @@
 .tracker-center .compact-calendar{padding:12px}
 .tracker-right .card{background:white;padding:12px;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:12px}
 .tracker-top-left .widgets-grid.compact{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tracker-top-right .card{background:white;padding:12px;border-radius:10px;border:1px solid #e2e8f0}
+.tracker-top-right .card{background:white;padding:14px;border-radius:12px;border:1px solid rgba(226,232,240,1);box-shadow: 0 6px 18px rgba(15,23,42,0.04);} 
 .tracker-bottom-left .compact-calendar{padding:12px;background:white;border-radius:10px;border:1px solid #e2e8f0}
-.tracker-bottom-right .card{background:white;padding:12px;border-radius:10px;border:1px solid #e2e8f0}
+
+/* Calendar reminder (only in Cycle & Tracker tab) */
+.calendar-reminder{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-radius:12px;background:linear-gradient(180deg,#fff9fb,#ffffff);border:1px solid rgba(232,120,136,0.08);box-shadow:0 6px 18px rgba(232,120,136,0.04);margin-bottom:12px}
+.calendar-reminder .reminder-text{color:#6b2a32;font-weight:600;font-size:14px}
+.calendar-reminder .reminder-btn{background:linear-gradient(90deg,#f8a2b0,#fbc8d3);color:#fff;border:none;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+.calendar-reminder .reminder-btn:hover{filter:brightness(0.98)}
+@media (max-width:980px){.calendar-reminder{font-size:13px;padding:8px;border-radius:10px;gap:8px}}
+.tracker-bottom-right .card{background:white;padding:14px;border-radius:12px;border:1px solid rgba(226,232,240,1);box-shadow: 0 6px 18px rgba(15,23,42,0.04);} 
 .compact-legend{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 
 @media (max-width: 980px){
@@ -181,6 +211,18 @@
   color: rgb(232, 120, 136);
   margin: 0 0 4px 0;
 }
+
+/* Highlight when next period is today */
+.widget.small .widget-value.today {
+  background: linear-gradient(90deg, rgb(232,120,136), rgb(248,128,148));
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.summary-card.today { box-shadow: 0 18px 40px rgba(232,120,136,0.12); transform: translateY(-4px); }
+.summary-card.today .summary-value { background: rgb(232,120,136); color: white; padding:6px 10px; border-radius:6px; display:inline-block }
 
 .widget-meta {
   font-size: 12px;
@@ -302,6 +344,16 @@
   font-size: 13px;
   font-weight: 700;
   color: rgb(232, 120, 136);
+}
+
+/* Empty/placeholder state for metrics (no user input) */
+.metric-card.empty .metric-fill {
+  background: linear-gradient(90deg, #edf2f7, #edf2f7);
+  opacity: 0.9;
+}
+.metric-card.empty .metric-label {
+  color: #94a3b8;
+  font-weight: 700;
 }
 
 /* Calendar */
@@ -455,6 +507,25 @@
   font-weight: 700;
   color: #2d3748;
   margin-bottom: 25px;
+}
+
+/* Logs tab layout */
+.logs-grid { display: grid; grid-template-columns: 1fr 360px; gap: 18px; align-items: start; }
+.logs-left { min-width: 0; }
+.logs-right { background: white; padding: 14px; border-radius: 10px; border: 1px solid #e6edf3; box-shadow: 0 8px 24px rgba(15,23,42,0.03); }
+.muted { color:#718096; font-size:13px }
+.chart-grid { display:flex; flex-direction:column; gap:8px; }
+.chart-row { display:flex; gap:12px; align-items:center }
+.chart-label { width:84px; font-weight:700; color:#2d3748 }
+.chart-line { flex:1 }
+.chart-days { position:relative; height:22px; background:linear-gradient(90deg,#fff,#fff); border-radius:6px; border:1px solid #edf2f7; display:block; overflow:hidden }
+.chart-day { width:calc(100%/31); height:100%; float:left }
+.dot { position:absolute; top:50%; transform:translateY(-50%); width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 6px 18px rgba(15,23,42,0.08) }
+.dot.predicted { background: rgba(232,120,136,0.8); left:0 }
+.dot.actual { background: #2d3748; left:0 }
+
+@media (max-width: 980px){
+  .logs-grid { grid-template-columns: 1fr; }
 }
 
 /* Upload Area */

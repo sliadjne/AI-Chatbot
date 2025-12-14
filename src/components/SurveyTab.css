@@ -1,7 +1,9 @@
 .survey-tab{
-	padding: 20px;
+	padding: 10px 6px;
 	color: #2d3748;
 	background: transparent;
+	display: flex;
+	justify-content: center;
 }
 .survey-tab h2{
 	margin-bottom: 14px;
@@ -9,11 +11,12 @@
 }
 .question-area{
 	background: white;
-	padding: 20px;
+	padding: 18px;
 	border-radius: 12px;
-	box-shadow: 0 4px 12px rgba(232, 120, 136, 0.06);
-	border: 1px solid #e2e8f0;
-	max-width: 760px;
+	box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+	border: 1px solid rgba(226,232,240,0.9);
+	max-width: 420px;
+	width: 100%;
 }
 .question-count{font-size:13px;color:#718096;margin-bottom:6px}
 .question-text{font-weight:700;margin-bottom:12px;color:#2d3748}
