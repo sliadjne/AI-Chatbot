@@ -125,7 +125,7 @@
 .tracker-bottom-right{grid-column:2;grid-row:2}
 .tracker-left .widgets-grid.compact{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .widget.small{padding:12px;border-radius:10px}
-.compact-metrics{margin-top:12px;background:white;padding:10px;border-radius:8px;border:1px solid #e2e8f0}
+
 .metric-row{font-size:13px;padding:6px 0;color:#4a5568}
 .tracker-center .compact-calendar{padding:12px}
 .tracker-right .card{background:white;padding:12px;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:12px}

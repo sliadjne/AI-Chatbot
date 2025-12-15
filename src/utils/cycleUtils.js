@@ -72,7 +72,8 @@ export const computePhaseForDate = (dateObj, monthlyLogs, cycleData) => {
       const diff = Math.floor((check - start) / (1000 * 60 * 60 * 24));
       if (diff < 0) return null;
       const dayInCycle = (diff % cycleLen) + 1;
-      if (periodLen && dayInCycle <= periodLen) return { phase: 'menstruation', dayInCycle, cycleLen, periodLen };
+      // NOTE: Do NOT use `periodLen` to infer an explicit menstruation window for tracker-entered dates
+      // when the user did not provide an explicit end date. Period length is prediction-only.
       if (dayInCycle <= 13) return { phase: 'follicular', dayInCycle, cycleLen, periodLen };
       if (dayInCycle <= 16) return { phase: 'ovulation', dayInCycle, cycleLen, periodLen };
       return { phase: 'luteal', dayInCycle, cycleLen, periodLen };
@@ -96,6 +97,14 @@ export const computePhaseForDate = (dateObj, monthlyLogs, cycleData) => {
       const cycleLen = derived.avgCycle || 28;
       const periodLen = derived.avgPeriod || 5;
       return { phase: 'menstruation', dayInCycle, cycleLen, periodLen };
+    }
+  }
+
+  // If only an actualStart exists (user entered a start but no end), treat only that single day as authoritative menstruation
+  if (base.entry && base.entry.actualStart && !base.entry.actualEnd) {
+    const s = parseYMD(base.entry.actualStart);
+    if (s && dateObj.getFullYear() === s.getFullYear() && dateObj.getMonth() === s.getMonth() && dateObj.getDate() === s.getDate()) {
+      return { phase: 'menstruation', dayInCycle: 1 };
     }
   }
 

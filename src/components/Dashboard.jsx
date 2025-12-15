@@ -487,6 +487,12 @@ const Dashboard = () => {
             const s = parseLocalDate(ent.actualStart);
             const e = parseLocalDate(ent.actualEnd);
             if (s && e && dayDate >= s && dayDate <= e) forcedActual = { s, e };
+          } else if (ent && ent.actualStart && !ent.actualEnd) {
+            // User entered only a start date — treat that single day as authoritative period day
+            const s = parseLocalDate(ent.actualStart);
+            if (s && dayDate.getFullYear() === s.getFullYear() && dayDate.getMonth() === s.getMonth() && dayDate.getDate() === s.getDate()) {
+              forcedActual = { s, e: s };
+            }
           }
         });
 
@@ -1005,13 +1011,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* survey insights moved below the Survey widget for better UX */}
 
-              <div className="compact-metrics">
-                <div className="metric-row"><strong>Regularity:</strong> {cycleRegularityPercent}%</div>
-                <div className="metric-row"><strong>Symptoms:</strong> {symptomSeverityPercent}%</div>
-                <div className="metric-row"><strong>Completeness:</strong> {dataCompletenessPercent}%</div>
-              </div>
             </div>
 
             <div className="tracker-top-right">
