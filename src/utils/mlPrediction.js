@@ -320,6 +320,128 @@ export const calculateCyclePhaseDistribution = (cycleData, _surveyResults, selec
 };
 
 /**
+ * Generate a short, non-diagnostic daily AI summary from a single day entry
+ * Inputs:
+ *  - date: string YYYY-MM-DD or Date
+ *  - dayEntry: { mood, symptoms: [] }
+ *  - context: { userProfile, surveyResults, phaseLabel, isLogged }
+ * Returns: { date, phaseLabel, isLogged, summary, indicators }
+ */
+export const generateDailyAISummary = ({ date, dayEntry = {}, context = {} }) => {
+  // Important: this function produces contextual, regenerative summaries for UX and AI features.
+  // It is intentionally non-diagnostic and does NOT store or assert medical conditions. The
+  // heuristics used here are descriptive for user-facing explanations only and should be
+  // interpreted as supportive guidance rather than clinical decision rules.
+  const dStr = (date instanceof Date) ? date.toISOString().slice(0,10) : String(date || '');
+  const mood = dayEntry.mood || 'neutral';
+  const symptoms = Array.isArray(dayEntry.symptoms) ? dayEntry.symptoms : [];
+
+  const symptomCount = symptoms.length;
+  let symptomLevel = 'none';
+  if (symptomCount === 0) symptomLevel = 'none';
+  else if (symptomCount <= 2) symptomLevel = 'mild';
+  else if (symptomCount <= 5) symptomLevel = 'moderate';
+  else symptomLevel = 'severe';
+
+  const stress = context.surveyResults?.answers?.stress || 'unknown';
+  const sleepHours = Number(context.surveyResults?.answers?.sleep_hours) || null;
+  const exercise = context.surveyResults?.answers?.exercise || null;
+
+  // Phase context: prefer provided label, fallback to unknown
+  const phaseLabel = context.phaseLabel || '—';
+  const logged = !!context.isLogged;
+
+  // Alignment reasoning between survey long-term context and today
+  let alignmentNote = '';
+  if (stress === 'high' && (symptoms.includes('Fatigue') || mood === 'tired' || (sleepHours && sleepHours < 6))) {
+    alignmentNote = 'This aligns with your reported higher stress and reduced sleep, which can amplify symptoms.';
+  } else if (stress === 'low' && symptomLevel === 'none') {
+    alignmentNote = 'This low-symptom day aligns with your reported low stress.';
+  } else if (stress !== 'unknown' && symptomLevel !== 'none') {
+    alignmentNote = 'Symptoms today may reflect day-to-day variation relative to your longer-term survey patterns.';
+  }
+
+  // Compose supportive, non-diagnostic summary
+  const summaryParts = [];
+  if (symptomLevel === 'none') summaryParts.push('A low-symptom day with stable mood.');
+  else summaryParts.push(`A ${symptomLevel} symptom day with ${mood} mood.`);
+
+  if (phaseLabel && phaseLabel !== '—') summaryParts.push(`Cycle phase: ${phaseLabel}.`);
+  if (sleepHours) summaryParts.push(`Typical sleep: ${sleepHours}h/night (survey).`);
+  if (alignmentNote) summaryParts.push(alignmentNote);
+
+  const summaryText = summaryParts.join(' ');
+
+  const indicators = {
+    symptomCount,
+    symptomLevel,
+    mood,
+    stress,
+    sleepHours,
+    exercise,
+    phaseLabel,
+    logged
+  };
+
+  return {
+    date: dStr,
+    phaseLabel,
+    isLogged: logged,
+    summary: summaryText,
+    indicators
+  };
+};
+
+/**
+ * Build a consolidated AI context object combining profile, survey, recent entries, and cycle context.
+ * This is intended to be passed into any AI-driven routine to provide consistent, reusable context.
+ */
+export const buildAIContext = ({ userProfile = {}, surveyResults = null, dayEntries = {}, monthlyLogs = {}, predictedPhaseMap = {} } = {}) => {
+  // Recent activity window: past 7 days
+  const dates = Object.keys(dayEntries || {}).sort().slice(-14); // keep up to last 14 for short-term
+  const recentEntries = dates.map(d => ({ date: d, ...dayEntries[d] }));
+  const symptomCounts = recentEntries.map(e => (e.symptoms || []).length);
+  const avgSymptoms = symptomCounts.length ? (symptomCounts.reduce((s,v) => s+v,0) / symptomCounts.length) : 0;
+
+  const cyclesAnalyzed = Object.values(monthlyLogs || {}).filter(e => e && e.actualStart).length;
+
+  return {
+    profile: userProfile,
+    survey: surveyResults?.answers || null,
+    recentEntries,
+    avgRecentSymptoms: avgSymptoms,
+    cyclesAnalyzed,
+    predictedPhaseMap
+  };
+};
+
+/**
+ * Generate a short, adaptive, supportive recommendation using the consolidated AI context.
+ * This is not diagnostic — it provides a rationale-linked, user-friendly suggestion.
+ */
+export const generateAdaptiveRecommendation = (ctx = {}) => {
+  const { profile = {}, survey = null, avgRecentSymptoms = 0, recentEntries = [] } = ctx;
+
+  // Simple supportive heuristics that combine signals (no fixed clinical thresholds)
+  const stress = survey?.stress || 'unknown';
+  const sleep = survey?.sleep_hours ? Number(survey.sleep_hours) : null;
+  const recentSymptomLevel = avgRecentSymptoms;
+
+  let recommendation = 'Keep tracking — patterns will help personalize recommendations.';
+
+  // If recent symptoms are elevated and sleep/stress indicate strain, suggest rest & hydration
+  if (recentSymptomLevel >= 1.5 && (stress === 'high' || (sleep !== null && sleep <= 6))) {
+    recommendation = 'Recent days show increased symptoms alongside stress or poor sleep. Consider lighter activity today, prioritize rest and hydration, and note how these adjustments affect your symptoms.';
+  } else if (recentSymptomLevel >= 1.5) {
+    recommendation = 'You have reported several symptoms recently; gentle self-care (hydration, light movement, and tracking) may help manage day-to-day discomfort.';
+  } else if (recentSymptomLevel === 0) {
+    recommendation = 'You’ve had low-symptom days recently — maintaining consistent sleep and stress-management may help keep this pattern.';
+  }
+
+  return { recommendation, rationale: { recentSymptomLevel, stress, sleep, profileSummary: { age: profile.age || null } } };
+};
+
+/**
  * Generate Gantt chart data for cycle phases
  */
 export const generateCycleGanttData = (cycleData, _surveyResults, months = 3) => {

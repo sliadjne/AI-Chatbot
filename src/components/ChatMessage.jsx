@@ -11,7 +11,7 @@ const ChatMessage = ({chat}) => {
       setDisplayed("");
       const full = chat.fullText;
       // typing speed in ms per character (lower is faster)
-      const speed = 16;
+      const speed = 10;
       let i = 0;
       const tick = () => {
         if (!mounted) return;

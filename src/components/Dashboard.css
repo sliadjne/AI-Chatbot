@@ -314,6 +314,22 @@
 .cta-button { background: rgb(232,120,136); color: white; border: none; padding:8px 12px; border-radius:8px; font-weight:700; cursor:pointer; }
 .cta-button:hover { filter:brightness(0.95); }
 
+/* Welcome widget shown above Key Metrics */
+.welcome-widget{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  background: linear-gradient(90deg,#ffffff,#fffaf8);
+  border:1px solid rgba(232,120,136,0.06);
+  padding:12px 14px;
+  border-radius:12px;
+  margin-bottom:16px;
+  box-shadow:0 8px 22px rgba(232,120,136,0.04);
+}
+.welcome-avatar{font-size:28px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(232,120,136,0.06)}
+.welcome-text h3{margin:0;font-size:16px;color:#2d3748}
+.welcome-text p{margin:6px 0 0;color:#64748b;font-size:13px}
+
 .metric-card {
   padding: 15px;
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { generateDailyAISummary } from '../utils/mlPrediction';
 import './MenstrualTracker.css';
 import { computePhaseForDate } from '../utils/cycleUtils';
 
-const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile, onPeriodLogged, nextPeriodDate, daysUntilNext, isNextPeriodToday, monthlyLogs, prefillDate, predictedPhaseMap }) => {
+const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile, onPeriodLogged, nextPeriodDate, daysUntilNext, isNextPeriodToday, monthlyLogs, prefillDate, predictedPhaseMap, surveyResults }) => {
   const [localData, setLocalData] = useState(cycleData || {
     lastPeriodDate: '', // period start date (kept for Dashboard compatibility)
     periodEndDate: '',
@@ -105,6 +106,7 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
   const [entryDate, setEntryDate] = useState('');
   const [entryMood, setEntryMood] = useState('neutral');
   const [entrySymptoms, setEntrySymptoms] = useState([]);
+  const [dailySummary, setDailySummary] = useState(null);
   const [localProfile, setLocalProfile] = useState(userProfile || { height: '', weight: '', age: '' });
 
   const handleHeightChange = (e) => {
@@ -128,6 +130,11 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     const newEntries = { ...(dayEntries || {}) };
     newEntries[key] = { mood: entryMood, symptoms: entrySymptoms };
     if (setDayEntries) setDayEntries(newEntries);
+    // Generate a transient AI summary for this day (do not persist)
+    const phaseLabel = (predictedPhaseMap && predictedPhaseMap[key]) ? predictedPhaseMap[key].phaseLabel : null;
+    const isLogged = !!(monthlyLogs && monthlyLogs[key?.slice(0,7)] && monthlyLogs[key.slice(0,7)].actualStart);
+    const summary = generateDailyAISummary({ date: key, dayEntry: newEntries[key], context: { userProfile, surveyResults: surveyResults || null, phaseLabel, isLogged } });
+    setDailySummary(summary);
     setEntryDate(''); setEntryMood('neutral'); setEntrySymptoms([]);
   };
 
@@ -331,6 +338,16 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
               <div style={{marginTop:10}}>
                 <button onClick={handleAddEntry} className="tracker-save-btn">Save Entry</button>
               </div>
+              {dailySummary && (
+                <div style={{marginTop:12, padding:10, background:'#fffefc', border:'1px solid rgba(232,120,136,0.06)', borderRadius:8}}>
+                  <strong>Daily AI Summary</strong>
+                  <div style={{fontSize:13,color:'#4a5568',marginTop:6}}>{dailySummary.summary}</div>
+                  <div style={{marginTop:8,display:'flex',gap:8}}>
+                    <button className="btn small" onClick={()=> setDailySummary(generateDailyAISummary({ date: dailySummary.date, dayEntry: dayEntries[dailySummary.date], context: { userProfile, phaseLabel: dailySummary.phaseLabel, isLogged: dailySummary.isLogged } }))}>Regenerate</button>
+                    <button className="btn small secondary" onClick={()=> setDailySummary(null)}>Dismiss</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="entries-list">

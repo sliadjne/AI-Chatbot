@@ -4,7 +4,7 @@ import SurveyTab from './SurveyTab';
 import MonthlyLogs from './MonthlyLogs';
 import MenstrualTracker from './MenstrualTracker';
 import CycleVisualizations from './CycleVisualizations';
-import { mapUserDataToFeatures, predictPCOS } from '../utils/mlPrediction';
+import { mapUserDataToFeatures, predictPCOS, generateDailyAISummary, buildAIContext, generateAdaptiveRecommendation } from '../utils/mlPrediction';
 import { computePhaseForDate } from '../utils/cycleUtils';
 import { useMLPrediction } from '../context/MLPredictionContext';
 
@@ -836,8 +836,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1 className="dashboard-title">❤️Health Dashboard</h1>
-        <p className="dashboard-subtitle">Track hormonal imbalances and cycle data</p>
+        <h1 className="dashboard-title">❤️PENNYLY</h1>
+        <p className="dashboard-subtitle">Know your cycle-Predict your flow ~ Live confidently</p>
       </div>
 
       {/* Tabs */}
@@ -872,7 +872,16 @@ const Dashboard = () => {
       {activeTab === 'overview' && (
         <div className="tab-content">
           <div className="tab-content-inner">
-          <div className="stats-section">
+            {/* Welcome widget above key metrics */}
+            <div className="welcome-widget">
+              <div className="welcome-avatar">👋</div>
+              <div className="welcome-text">
+                <h3>Hey girly, welcome to PENNYLY 🤍</h3>
+                <p>You’re in a safe space to understand your hormonal cycle. Track your cycle, and let AI gently help predict what’s next.</p>
+              </div>
+            </div>
+
+            <div className="stats-section">
             <h2>Key Metrics</h2>
             <div className="metrics-container">
               <div className={`metric-card ${cycleRegularityPercent === null ? 'empty' : ''}`}>
@@ -1111,6 +1120,7 @@ const Dashboard = () => {
                     monthlyLogs={monthlyLogs}
                     prefillDate={prefillEntryDate}
                   predictedPhaseMap={predictedPhaseMap}
+                  surveyResults={surveyResults}
                 />
               </div>
             </div>
@@ -1205,6 +1215,21 @@ const Dashboard = () => {
                 <div className="insights-section">
                   <h3>💡 Personalized Insights & Recommendations</h3>
                   <div className="insights-list">
+                        {/* Latest daily AI summary (transient) */}
+                        {Object.keys(dayEntries || {}).length > 0 && (() => {
+                          const keys = Object.keys(dayEntries).sort();
+                          const lastKey = keys[keys.length - 1];
+                          const lastEntry = dayEntries[lastKey];
+                          const phaseLabel = (predictedPhaseMap && predictedPhaseMap[lastKey]) ? predictedPhaseMap[lastKey].phaseLabel : null;
+                          const isLogged = !!(monthlyLogs && monthlyLogs[lastKey?.slice(0,7)] && monthlyLogs[lastKey.slice(0,7)].actualStart);
+                          const dailySummary = generateDailyAISummary({ date: lastKey, dayEntry: lastEntry, context: { userProfile, surveyResults, phaseLabel, isLogged } });
+                          return (
+                            <div className="daily-summary-card" style={{marginBottom:12, background:'#fffefc', border:'1px solid rgba(232,120,136,0.06)', padding:12, borderRadius:8}}>
+                              <div style={{fontWeight:700}}>Latest Daily Summary — {new Date(lastKey).toLocaleDateString()}</div>
+                              <div style={{color:'#4a5568', marginTop:6}}>{dailySummary.summary}</div>
+                            </div>
+                          );
+                        })()}
                       {mlPrediction.logsSummary && (
                         <div className="logs-summary-card">
                           <div className="logs-summary-title">Cycle Logs Summary</div>
@@ -1254,6 +1279,18 @@ const Dashboard = () => {
                         </div>
                       </div>
                     ))}
+
+                    {/* Adaptive, supportive recommendation generated from combined context */}
+                    {(() => {
+                      const ctx = buildAIContext({ userProfile, surveyResults, dayEntries, monthlyLogs, predictedPhaseMap });
+                      const rec = generateAdaptiveRecommendation(ctx);
+                      return (
+                        <div style={{marginTop:12, padding:12, borderRadius:8, background:'#fff', border:'1px solid #eef2f6'}}>
+                          <strong>Personalized suggestion</strong>
+                          <div style={{color:'#4a5568', marginTop:6}}>{rec.recommendation}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

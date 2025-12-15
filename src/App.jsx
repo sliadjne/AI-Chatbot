@@ -22,6 +22,19 @@ const AppContent = () => {
     }, 50);
   };
 
+  // Helper: detect greetings or 'what does this chatbox do' queries so we can reply locally
+  const isGreetingOrIntro = (text) => {
+    if (!text) return false;
+    const t = text.trim().toLowerCase();
+    // common short greetings
+    const short = /^(hi|hello|hey|hai|helo|hey girly|hello there)\b[!.]?$/i;
+    if (short.test(t)) return true;
+    // variants asking what the chatbox does
+    const what = /(what (does|is) (this )?(chat(box)?|this chat|you) (do|for)|what do you do|what can you do|what is this)/i;
+    if (what.test(t)) return true;
+    return false;
+  };
+
   const handleOpen = () => {
     setOpen(true);
   };
@@ -29,6 +42,13 @@ const AppContent = () => {
   const generateBotResponse = async (history) => {
     // For speed, send only the latest user message to the API (smaller payload)
     const last = history[history.length - 1];
+    const cannedIntro = `Hi girly, I’m Pennly 🌼\nI help explain your hormonal cycle, its phases, and the changes you may notice along the way 📘✨\nEverything here is meant to support learning and understanding at your own pace 🤍`;
+
+    // Short-circuit for very common greetings or 'what does this chatbox do' to keep replies fast and friendly
+    if (isGreetingOrIntro(last?.text)) {
+      seeChatHistory((prev) => [...prev, { role: 'model', text: '', fullText: cannedIntro }]);
+      return;
+    }
     
     // Build personalized context from ML prediction
     let userContext = '';
@@ -47,6 +67,7 @@ Use this context to provide more personalized, relevant advice. If the user has 
     const prompt = 
       `ur role is to provide clear, supportive, and medically-informed guidance about menstruation, hormonal changes, symptoms, emotional experiences, and common concerns related to the monthly cycle.
         Guidelines:
+      - Tone: calm, reassuring, gentle; use empathetic and non-alarmist language.
       - Always respond in **2 - 3 sentences maximum**.
       - Explain concepts in simple, reassuring language suitable for teens and adults.
       - Normalize menstruation as a natural biological process.
@@ -54,6 +75,7 @@ Use this context to provide more personalized, relevant advice. If the user has 
       - Provide general wellness suggestions such as rest, hydration, warmth, light exercise, and when appropriate, medically standard advice to seek help if symptoms are severe or unusual.
       - Do **not** diagnose medical conditions; instead, give general educational information.
       - Remain non-judgmental, empathetic, and comforting at all times.
+      - If the user greets the bot or asks what it does, respond briefly with the friendly intro: "Hi girly, I’m Pennly 🌼\nI help explain your hormonal cycle, its phases, and the changes you may notice along the way Everything here is meant to support learning and understanding at your own pace 📘✨".
       - Avoid graphic details and keep explanations approachable and respectful.
       - If a question falls outside menstruation, answer briefly and gently redirect back to helpful educational information.
 
@@ -181,7 +203,9 @@ Use this context to provide more personalized, relevant advice. If the user has 
         <div className="message bot-message">
           <ChatbotIcon />
           <p className="message-text">
-            Hey girly🩷 <br /> Anything I can help?
+            Hi girly, I’m Pennly 🌼 <br />
+            I help explain your hormonal cycle, its phases, and the changes you may notice along the way 📘✨ <br />
+            Everything here is meant to support learning and understanding at your own pace 🤍
           </p>
         </div>
 
