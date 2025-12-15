@@ -557,10 +557,10 @@ const Dashboard = () => {
   };
 
   const recordActualPeriod = (actualStartStr, actualEndStr) => {
-    // For the initial log, use the calendar/tracker Period Start/End when available
+    // Prefer user-supplied inputs (from logs UI) and normalize; fall back to tracker/survey source only when missing
     const src = getSourceCycle();
-    const finalStart = (src && src.startDate) ? src.startDate : (toYMD(actualStartStr) || actualStartStr || null);
-    const finalEnd = (src && src.periodEndDate) ? src.periodEndDate : (toYMD(actualEndStr) || actualEndStr || null);
+    const finalStart = toYMD(actualStartStr) || actualStartStr || (src && src.startDate) || null;
+    const finalEnd = toYMD(actualEndStr) || actualEndStr || (src && src.periodEndDate) || null;
     if (!finalStart) return;
     const actualDate = parseLocalDate(finalStart);
     if (!actualDate) return;
@@ -571,14 +571,13 @@ const Dashboard = () => {
       const next = { ...prev };
       const hasAnyActual = Object.values(prev || {}).some((v) => v && v.actualStart);
 
-      // Always set the month's actuals to reflect the calendar/tracker action (override prior incorrect data)
-      const src = getSourceCycle();
-      const finalStart = (src && src.startDate) ? src.startDate : (toYMD(actualStartStr) || actualStartStr || null);
-      const finalEnd = (src && src.periodEndDate) ? src.periodEndDate : (toYMD(actualEndStr) || actualEndStr || null);
+      // Always set the month's actuals to reflect the user's submitted values (normalize), overriding prior incorrect data
+      const normalizedStart = toYMD(actualStartStr) || actualStartStr || (src && src.startDate) || null;
+      const normalizedEnd = toYMD(actualEndStr) || actualEndStr || (src && src.periodEndDate) || null;
 
       if (!next[key]) next[key] = { predictedStart: null, predictedEnd: null, actualStart: null, actualEnd: null, createdAt: new Date().toISOString() };
-      next[key].actualStart = finalStart;
-      next[key].actualEnd = finalEnd;
+      next[key].actualStart = normalizedStart;
+      next[key].actualEnd = normalizedEnd;
       if (!hasAnyActual) next[key].isInitialCycle = true;
 
       return next;

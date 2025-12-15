@@ -1,28 +1,61 @@
 import { useState } from 'react';
 import './MonthlyLogs.css';
 
+const normalizeInput = (dateStr) => {
+  if (!dateStr) return null;
+  if (dateStr.includes('-')) {
+    // already YYYY-MM-DD
+    const parts = dateStr.split('-');
+    if (parts[0].length === 4) return dateStr;
+    // maybe DD-MM-YYYY
+    if (parts[2] && parts[2].length === 4) {
+      const [d, m, y] = parts.map(Number);
+      return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+    return dateStr;
+  }
+  if (dateStr.includes('/')) {
+    const p = dateStr.split('/').map(Number);
+    // prefer DD/MM/YYYY when ambiguous
+    if (p[0] > 12) {
+      return `${p[2]}-${String(p[1]).padStart(2,'0')}-${String(p[0]).padStart(2,'0')}`;
+    }
+    if (p[1] > 12) {
+      return `${p[2]}-${String(p[0]).padStart(2,'0')}-${String(p[1]).padStart(2,'0')}`;
+    }
+    return `${p[2]}-${String(p[1]).padStart(2,'0')}-${String(p[0]).padStart(2,'0')}`;
+  }
+  return null;
+};
+
 const formatLocal = (ymd) => {
   if (!ymd) return 'Not logged yet';
-  const [y, m, d] = ymd.split('-').map(Number);
+  const n = normalizeInput(ymd);
+  if (!n) return 'Not logged yet';
+  const [y, m, d] = n.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   return dt.toLocaleDateString();
 };
 
 const MonthCard = ({ keyStr, entry, onLogActual, onUpdateActual, onOpenLog }) => {
   const [editing, setEditing] = useState(false);
-  const [start, setStart] = useState(entry.actualStart || '');
-  const [end, setEnd] = useState(entry.actualEnd || '');
+  const [start, setStart] = useState(normalizeInput(entry.actualStart) || '');
+  const [end, setEnd] = useState(normalizeInput(entry.actualEnd) || '');
 
   const submit = () => {
-    if (!start) return;
     // Do not allow editing or re-logging the immutable initial cycle
     if (entry.isInitialCycle) return;
+    const s = normalizeInput(start);
+    if (!s) return; // require a valid start
+    const e = normalizeInput(end) || null;
     if (entry.actualStart) {
-      onUpdateActual && onUpdateActual(keyStr, start, end || null);
+      onUpdateActual && onUpdateActual(keyStr, s, e);
     } else {
-      onLogActual && onLogActual(keyStr, start, end || null);
+      onLogActual && onLogActual(keyStr, s, e);
     }
     setEditing(false);
+    setStart(s || '');
+    setEnd(e || '');
   };
 
   return (
