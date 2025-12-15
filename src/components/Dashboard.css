@@ -966,6 +966,24 @@
 .insights-list {
   display: flex;
   flex-direction: column;
+
+.logs-summary-card {
+  background: #fafafa;
+  border: 1px solid rgba(15,23,42,0.03);
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.logs-summary-title {
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.logs-summary-body {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #4a5568;
+}
   gap: 15px;
 }
 

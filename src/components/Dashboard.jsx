@@ -359,13 +359,59 @@ const Dashboard = () => {
   const { setMlPrediction, setUserFeatures } = useMLPrediction();
 
   // Calculate ML prediction
+  // Derive cycle statistics from `monthlyLogs` when available (prefer actuals over predicted)
+  const deriveCycleFromLogs = (logs) => {
+    if (!logs) return null;
+    const entries = Object.values(logs).filter(e => e && e.actualStart).map(e => ({ start: e.actualStart, end: e.actualEnd }));
+    if (!entries.length) return null;
+    // Sort by start date ascending
+    entries.sort((a,b) => (a.start < b.start ? -1 : 1));
+    // Compute cycle lengths as days between consecutive starts
+    const starts = entries.map(e => parseLocalDate(e.start)).filter(Boolean);
+    const cycleLens = [];
+    for (let i = 1; i < starts.length; i++) {
+      const dsp = Math.round((starts[i] - starts[i-1]) / (1000*60*60*24));
+      if (dsp > 0) cycleLens.push(dsp);
+    }
+    const avgCycle = cycleLens.length ? Math.round(cycleLens.reduce((s,v) => s+v,0) / cycleLens.length) : null;
+    // period lengths from start/end
+    const periodLens = entries.map(e => {
+      if (!e.end) return null;
+      const s = parseLocalDate(e.start);
+      const t = parseLocalDate(e.end);
+      if (!s || !t) return null;
+      return Math.round((t - s) / (1000*60*60*24)) + 1;
+    }).filter(Boolean);
+    const avgPeriod = periodLens.length ? Math.round(periodLens.reduce((s,v) => s+v,0) / periodLens.length) : null;
+    const irregular = cycleLens.length ? (Math.max(...cycleLens) - Math.min(...cycleLens) > 7) : false;
+    return {
+      derivedCycleLength: avgCycle,
+      derivedPeriodLength: avgPeriod,
+      irregular,
+      recentEntries: entries,
+    };
+  };
+
   const mlPrediction = useMemo(() => {
-    if (!surveyResults && !cycleData?.lastPeriodDate) {
+    // require either survey or some tracker/logs data
+    if (!surveyResults && !cycleData?.lastPeriodDate && (!monthlyLogs || Object.keys(monthlyLogs).length === 0)) {
       return null;
     }
-    const features = mapUserDataToFeatures(surveyResults, cycleData, dayEntries, userProfile);
-    return predictPCOS(features);
-  }, [surveyResults, cycleData, dayEntries, userProfile]);
+
+    const derived = deriveCycleFromLogs(monthlyLogs);
+    // Build an enriched cycleData object to prefer measured values when available
+    const enrichedCycleData = { ...cycleData };
+    if (derived) {
+      if (derived.derivedCycleLength) enrichedCycleData.cycleLength = derived.derivedCycleLength;
+      if (derived.derivedPeriodLength) enrichedCycleData.periodLength = derived.derivedPeriodLength;
+    }
+
+    const features = mapUserDataToFeatures(surveyResults, enrichedCycleData, dayEntries, userProfile, monthlyLogs);
+    const pred = predictPCOS(features);
+    // Attach logs-derived summary into prediction for transparency
+    pred.logsSummary = derived;
+    return pred;
+  }, [surveyResults, cycleData, dayEntries, userProfile, monthlyLogs]);
 
   // Update context when prediction changes
   useEffect(() => {
@@ -1068,6 +1114,17 @@ const Dashboard = () => {
                 <div className="insights-section">
                   <h3>💡 Personalized Insights & Recommendations</h3>
                   <div className="insights-list">
+                      {mlPrediction.logsSummary && (
+                        <div className="logs-summary-card">
+                          <div className="logs-summary-title">Cycle Logs Summary</div>
+                          <div className="logs-summary-body">
+                            <div>Cycles analysed: {mlPrediction.logsSummary.recentEntries.length}</div>
+                            <div>Avg cycle length: {mlPrediction.logsSummary.derivedCycleLength || '—'} days</div>
+                            <div>Avg period length: {mlPrediction.logsSummary.derivedPeriodLength || '—'} days</div>
+                            <div>Variability: {mlPrediction.logsSummary.irregular ? 'Irregular' : 'Stable'}</div>
+                          </div>
+                        </div>
+                      )}
                     {mlPrediction.insights.map((insight, idx) => (
                       <div key={idx} className={`insight-card ${insight.type}`}>
                         <div className="insight-icon">

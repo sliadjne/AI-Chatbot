@@ -13,7 +13,7 @@
 /**
  * Maps user data from cycle & tracker to PCOS model features
  */
-export const mapUserDataToFeatures = (surveyResults, cycleData, dayEntries, userProfile = {}) => {
+export const mapUserDataToFeatures = (surveyResults, cycleData, dayEntries, userProfile = {}, monthlyLogs = {}) => {
   // Extract data from survey
   const answers = surveyResults?.answers || {};
   const regularity = answers.regularity === 'irregular' ? 1 : 0;
@@ -41,6 +41,30 @@ export const mapUserDataToFeatures = (surveyResults, cycleData, dayEntries, user
     pmsSeverity,
     acne,
     stress,
+    // Include logs-derived context when available
+    cyclesAnalyzed: (() => {
+      const entries = Object.values(monthlyLogs || {}).filter(e => e && e.actualStart);
+      return entries.length;
+    })(),
+    avgPeriodLength: (() => {
+      const entries = Object.values(monthlyLogs || {}).filter(e => e && e.actualStart && e.actualEnd);
+      if (!entries.length) return null;
+      const lens = entries.map(e => {
+        const s = new Date(e.actualStart);
+        const t = new Date(e.actualEnd);
+        return Math.round((t - s) / (1000*60*60*24)) + 1;
+      });
+      return Math.round(lens.reduce((s,v) => s+v,0) / lens.length);
+    })(),
+    cycleVariability: (() => {
+      const entries = Object.values(monthlyLogs || {}).filter(e => e && e.actualStart).sort((a,b) => (a.actualStart < b.actualStart ? -1 : 1));
+      if (entries.length < 2) return null;
+      const starts = entries.map(e => new Date(e.actualStart));
+      const diffs = [];
+      for (let i = 1; i < starts.length; i++) diffs.push(Math.round((starts[i] - starts[i-1])/(1000*60*60*24)));
+      if (!diffs.length) return null;
+      return Math.max(...diffs) - Math.min(...diffs);
+    })(),
     // Store user profile for display
     userProfile
   };
@@ -253,6 +277,22 @@ const generateInsights = (features, riskScore, prediction) => {
       title: 'Acne Management',
       message: 'Hormonal acne can be managed with proper skincare, diet modifications, and potentially hormonal treatments.'
     });
+  }
+
+  // Insights from logs-derived data
+  if (features.cyclesAnalyzed && features.cyclesAnalyzed >= 3) {
+    insights.push({
+      type: 'info',
+      title: `Based on ${features.cyclesAnalyzed} cycles`,
+      message: `Average cycle length: ${features.cycleLength || '—'} days; average period length: ${features.avgPeriodLength || '—'} days.`
+    });
+    if (features.cycleVariability && features.cycleVariability > 7) {
+      insights.push({
+        type: 'warning',
+        title: 'Cycle Variability Detected',
+        message: 'Your recorded cycles vary by more than a week — this may indicate irregular cycles influenced by lifestyle or hormonal factors.'
+      });
+    }
   }
   
   return insights;
