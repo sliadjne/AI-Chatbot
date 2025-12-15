@@ -306,13 +306,13 @@ export const calculateCyclePhaseDistribution = (cycleData, _surveyResults, selec
   const cycleLength = Number(cycleData?.cycleLength) || 28;
   const periodLength = Number(cycleData?.periodLength) || 5;
   
-  const menstruation = periodLength;
+  const period = periodLength;
   const follicular = Math.max(0, 13 - periodLength);
   const ovulation = 3; // Days 13-16 typically
-  const luteal = cycleLength - menstruation - follicular - ovulation;
+  const luteal = cycleLength - period - follicular - ovulation;
   
   return [
-    { name: 'Menstruation', days: menstruation, color: '#f56565' },
+    { name: 'Period', days: period, color: '#f56565' },
     { name: 'Follicular', days: follicular, color: '#f8a855' },
     { name: 'Ovulation', days: ovulation, color: '#ffd700' },
     { name: 'Luteal', days: luteal, color: '#b19cd9' }
@@ -364,7 +364,7 @@ export const generateCycleGanttData = (cycleData, _surveyResults, months = 3) =>
 };
 
 const getPhaseForDay = (day, cycleLength, periodLength) => {
-  if (day <= periodLength) return 'Menstruation';
+  if (day <= periodLength) return 'Period';
   if (day <= 13) return 'Follicular';
   if (day <= 16) return 'Ovulation';
   return 'Luteal';

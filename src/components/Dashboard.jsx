@@ -5,6 +5,7 @@ import MonthlyLogs from './MonthlyLogs';
 import MenstrualTracker from './MenstrualTracker';
 import CycleVisualizations from './CycleVisualizations';
 import { mapUserDataToFeatures, predictPCOS } from '../utils/mlPrediction';
+import { computePhaseForDate } from '../utils/cycleUtils';
 import { useMLPrediction } from '../context/MLPredictionContext';
 
 const Dashboard = () => {
@@ -19,6 +20,7 @@ const Dashboard = () => {
   const [monthlyLogs, setMonthlyLogs] = useState({}); // { '2025-11': { predictedStart, predictedEnd, actualStart, actualEnd, createdAt }}
   const [firstEntryDate, setFirstEntryDate] = useState(null);
   const [prefillEntryDate, setPrefillEntryDate] = useState(null);
+  const [predictedPhaseMap, setPredictedPhaseMap] = useState({}); // map YYYY-MM-DD -> { phaseCode, phaseLabel, dayInCycle }
 
   // Generate calendar days
   const getDaysInMonth = (date) => {
@@ -156,47 +158,40 @@ const Dashboard = () => {
     return null;
   };
 
+  const findBaseFromMonthlyLogs = (dateObj) => {
+    if (!monthlyLogs) return null;
+    const candidates = [];
+    Object.values(monthlyLogs).forEach((e) => {
+      if (!e) return;
+      if (e.actualStart) {
+        const d = parseLocalDate(e.actualStart);
+        if (d && d <= dateObj) candidates.push({ date: d, startStr: e.actualStart, type: 'actual' });
+      }
+      if (e.predictedStart) {
+        const d = parseLocalDate(e.predictedStart);
+        if (d && d <= dateObj) candidates.push({ date: d, startStr: e.predictedStart, type: 'predicted' });
+      }
+    });
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => b.date - a.date); // latest first
+    return candidates[0];
+  };
+
+  // Use shared utility for phase computation so dashboard and tracker stay consistent
   const phaseForDate = (dateObj) => {
-    // Format the calendar date as YYYY-MM-DD string
+    if (!dateObj) return null;
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getDate()).padStart(2, '0');
-    const checkDateStr = `${year}-${month}-${day}`;
+    const key = `${year}-${month}-${day}`;
 
+    // 1) Preferred source: predictedPhaseMap (calendar's authoritative per-day predictions)
+    if (predictedPhaseMap && predictedPhaseMap[key]) return predictedPhaseMap[key].phaseCode;
 
-    const src = getSourceCycle();
-    if (!src || !src.startDate) return null;
-
-    const startDateStr = src.startDate;
-    const endDateStr = src.periodEndDate;
-
-    // FIRST: Direct comparison for logged period (actual menstruation) from tracker base
-    if (src.ongoing) {
-      if (checkDateStr >= startDateStr) return 'menstruation';
-    } else if (endDateStr) {
-      if (checkDateStr >= startDateStr && checkDateStr <= endDateStr) return 'menstruation';
-    }
-
-    // If cycle length is not explicitly provided, do not attempt to compute other phases.
-    // This enforces the separation between the History layer (logged start/end) and Prediction layer (cycle lengths).
-    if (!src.cycleLength) return null;
-
-    // SECOND: Calculate other phases based on cycle length
-    const start = parseLocalDate(startDateStr);
-    const check = parseLocalDate(checkDateStr);
-    if (!start || !check) return null;
-
-    const cycleLen = src.cycleLength || 28;
-    const periodLen = src.periodLength || 5;
-
-    const daysSinceStart = Math.floor((check - start) / (1000 * 60 * 60 * 24));
-    if (daysSinceStart < 0) return null;
-
-    const dayInCycle = daysSinceStart % cycleLen;
-    if (dayInCycle < periodLen) return 'menstruation';
-    if (dayInCycle < 13) return 'follicular';
-    if (dayInCycle < 16) return 'ovulation';
-    return 'luteal';
+    // 2) Fallback: monthlyLogs' actual period ranges
+    // If calendar doesn't have the predicted mapping for this day, fall back to computePhaseForDate
+    const res = computePhaseForDate(dateObj, monthlyLogs, getSourceCycle());
+    return res ? res.phase : null;
   };
 
   const formatDateKey = (year, month, day) => {
@@ -421,33 +416,135 @@ const Dashboard = () => {
     }
   }, [mlPrediction, setMlPrediction, setUserFeatures]);
 
+  // Rebuild predicted per-day phase map whenever monthly logs, cycle settings, or firstEntryDate change
+  useEffect(() => {
+    const baseStart = getSourceCycle()?.startDate || firstEntryDate;
+    if (!baseStart) return;
+    const cycleLen = cycleData?.cycleLength ? Number(cycleData.cycleLength) : 28;
+    const periodLen = cycleData?.periodLength ? Number(cycleData.periodLength) : 5;
+    const startMonthIndex = parseLocalDate(firstEntryDate || baseStart).getFullYear() * 12 + parseLocalDate(firstEntryDate || baseStart).getMonth();
+    const now = new Date();
+    const endMonthIndex = now.getFullYear() * 12 + now.getMonth();
+    const pm = computePredictedMap(baseStart, cycleLen, periodLen, startMonthIndex, endMonthIndex);
+    buildPredictedPhaseMap(pm, cycleLen, periodLen, startMonthIndex, endMonthIndex);
+  }, [monthlyLogs, cycleData, firstEntryDate]);
+
   // Compute widget metrics from combined sources (survey OR tracker)
   const sourceCycle = getSourceCycle();
 
+  // Build per-day predicted phase map from monthly logs and calendar predictions
+  const buildPredictedPhaseMap = (predictedMap, cycleLen, periodLen, startMonthIndex, endMonthIndex) => {
+
+    // `predictedMap` is a month-key -> { predictedStart, predictedEnd }
+    const out = {};
+    if (!predictedMap || !cycleLen) {
+      setPredictedPhaseMap({});
+      return;
+    }
+
+    // Gather start dates from predictedMap; also include actual starts where present in monthlyLogs to prefer those
+    const starts = [];
+    Object.entries(predictedMap).forEach(([monthKey, p]) => {
+      if (!p) return;
+      if (p.predictedStart) {
+        starts.push({ date: parseLocalDate(p.predictedStart), startStr: p.predictedStart, type: 'predicted' });
+      }
+    });
+
+    // also include actual starts from monthlyLogs (they should override predicted ranges)
+    Object.values(monthlyLogs || {}).forEach((e) => {
+      if (!e) return;
+      if (e.actualStart) starts.push({ date: parseLocalDate(e.actualStart), startStr: e.actualStart, type: 'actual', entry: e });
+    });
+
+    starts.sort((a, b) => a.date - b.date);
+
+    // compute an upper bound for the map
+    const firstStart = starts.length ? starts[0].date : parseLocalDate(firstEntryDate || new Date().toISOString().split('T')[0]);
+    const now = new Date();
+    const endMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endMonthIdx = endMonthIndex || (endMonthDate.getFullYear() * 12 + endMonthDate.getMonth());
+
+    // We'll project cycles forward from earliest start up to endMonthIdx + 1 month for safety
+    const projectedEnd = new Date(endMonthDate.getFullYear(), endMonthDate.getMonth() + 1, 0);
+
+    // Build cycles: iterate cycles starting at earliest start
+    let cursor = new Date(firstStart.getFullYear(), firstStart.getMonth(), firstStart.getDate());
+    let cycleIndex = 0;
+    while (cursor <= projectedEnd && cycleIndex < 500) {
+      // For each day in the cycle, determine phase
+      for (let d = 0; d < cycleLen; d++) {
+        const dayDate = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + d);
+        const y = dayDate.getFullYear();
+        const m = String(dayDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(dayDate.getDate()).padStart(2, '0');
+        const key = `${y}-${m}-${dd}`;
+
+        // Check for explicit actuals covering this day (from monthlyLogs)
+        let forcedActual = null;
+        Object.values(monthlyLogs || {}).forEach((ent) => {
+          if (ent && ent.actualStart && ent.actualEnd) {
+            const s = parseLocalDate(ent.actualStart);
+            const e = parseLocalDate(ent.actualEnd);
+            if (s && e && dayDate >= s && dayDate <= e) forcedActual = { s, e };
+          }
+        });
+
+        let phaseCode = null;
+        if (forcedActual) {
+          phaseCode = 'menstruation';
+        } else {
+          const dayInCycle = d + 1; // 1-indexed
+          if (dayInCycle <= periodLen) phaseCode = 'menstruation';
+          else if (dayInCycle <= 13) phaseCode = 'follicular';
+          else if (dayInCycle <= 16) phaseCode = 'ovulation';
+          else phaseCode = 'luteal';
+        }
+
+        out[key] = { phaseCode, phaseLabel: phaseCode === 'menstruation' ? 'Period' : phaseCode.charAt(0).toUpperCase() + phaseCode.slice(1), dayInCycle: d + 1 };
+      }
+
+      // advance cursor by cycleLen days
+      cursor.setDate(cursor.getDate() + cycleLen);
+      cycleIndex += 1;
+    }
+
+    setPredictedPhaseMap(out);
+  };
+
   // Current phase using logged data/calendar logic — ONLY if user has entered data
   const today = new Date();
-  const hasUserData = !!(sourceCycle && sourceCycle.startDate);
+  // Treat either tracker start or monthly logs (actual/predicted) as user data for phase computation
+  const hasUserData = !!((sourceCycle && sourceCycle.startDate) || (monthlyLogs && Object.values(monthlyLogs).some((v) => v && (v.actualStart || v.predictedStart))));
   const rawPhase = hasUserData ? phaseForDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0,0,0,0)) : null;
   const phaseLabelMap = {
-    menstruation: 'Menstrual',
+    menstruation: 'Period',
     follicular: 'Follicular',
     ovulation: 'Ovulation',
     luteal: 'Luteal',
   };
   const currentPhaseLabel = rawPhase ? (phaseLabelMap[rawPhase] || String(rawPhase)) : '—';
 
-  // Day of cycle (calculate from startDate if available)
+  // Day of cycle (calculate from startDate, tracker or monthly logs as available)
   let dayOfCycle = null;
-  if (hasUserData && sourceCycle && sourceCycle.startDate) {
-    const start = parseLocalDate(sourceCycle.startDate);
-    if (start) {
-      const diffDays = Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate(),0,0,0,0) - start) / (1000 * 60 * 60 * 24));
-      // Only compute dayOfCycle when an explicit cycleLength is provided (prediction layer).
-      if (sourceCycle.cycleLength) {
-        const cycleLen = Math.max(1, Number(sourceCycle.cycleLength));
+  // Prefer predictedPhaseMap if it contains today
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  if (predictedPhaseMap && predictedPhaseMap[todayKey]) {
+    dayOfCycle = predictedPhaseMap[todayKey].dayInCycle;
+  } else {
+    // compute base start from tracker first, then monthly logs
+    let baseStartStr = sourceCycle && sourceCycle.startDate ? sourceCycle.startDate : null;
+    if (!baseStartStr) {
+      const base = findBaseFromMonthlyLogs(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0,0,0,0));
+      if (base) baseStartStr = base.startStr;
+    }
+    if (baseStartStr) {
+      const start = parseLocalDate(baseStartStr);
+      if (start) {
+        const diffDays = Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate(),0,0,0,0) - start) / (1000 * 60 * 60 * 24));
+        const derived = deriveCycleFromLogs(monthlyLogs);
+        const cycleLen = (sourceCycle && sourceCycle.cycleLength) ? Math.max(1, Number(sourceCycle.cycleLength)) : (derived?.derivedCycleLength || 28);
         dayOfCycle = (((diffDays % cycleLen) + cycleLen) % cycleLen) + 1; // 1-indexed
-      } else {
-        dayOfCycle = null;
       }
     }
   }
@@ -497,6 +594,10 @@ const Dashboard = () => {
     const endMonthIndex = now.getFullYear() * 12 + now.getMonth();
 
     const predictedMap = computePredictedMap(firstStartStr, cycleLen, periodLen, startMonthIndex, endMonthIndex);
+
+    // Also build the per-day predicted phase map to be authoritative for the calendar and widgets
+    buildPredictedPhaseMap(predictedMap, cycleLen, periodLen, startMonthIndex, endMonthIndex);
+
 
     setMonthlyLogs((prev) => {
       const next = { ...prev };
@@ -573,6 +674,9 @@ const Dashboard = () => {
       }
       return next;
     });
+
+    // Build per-day predicted phase map so widgets read the same authoritative predictions
+    buildPredictedPhaseMap(predictedMap, cycleLen, periodLen, startMonthIndex, endMonthIndex);
   };
 
   const recordActualPeriod = (actualStartStr, actualEndStr) => {
@@ -607,6 +711,13 @@ const Dashboard = () => {
     const cycleLen = cycleData?.cycleLength ? Number(cycleData.cycleLength) : 28;
     const periodLen = cycleData?.periodLength ? Number(cycleData.periodLength) : 5;
     ensurePredictedLogs(baseStart, cycleLen, periodLen);
+
+    // Rebuild the predicted phase map so the calendar and Current Phase reflect the update
+    const now = new Date();
+    const startMonthIndex = parseLocalDate(firstEntryDate || baseStart).getFullYear() * 12 + parseLocalDate(firstEntryDate || baseStart).getMonth();
+    const endMonthIndex = now.getFullYear() * 12 + now.getMonth();
+    const pm = computePredictedMap(baseStart, cycleLen, periodLen, startMonthIndex, endMonthIndex);
+    buildPredictedPhaseMap(pm, cycleLen, periodLen, startMonthIndex, endMonthIndex);
   };
 
   // Explicit update when user edits actuals from the UI
@@ -999,6 +1110,7 @@ const Dashboard = () => {
                     isNextPeriodToday={isNextPeriodToday}
                     monthlyLogs={monthlyLogs}
                     prefillDate={prefillEntryDate}
+                  predictedPhaseMap={predictedPhaseMap}
                 />
               </div>
             </div>

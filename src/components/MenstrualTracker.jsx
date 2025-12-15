@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import './MenstrualTracker.css';
+import { computePhaseForDate } from '../utils/cycleUtils';
 
-const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile, onPeriodLogged, nextPeriodDate, daysUntilNext, isNextPeriodToday, monthlyLogs, prefillDate }) => {
+const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, userProfile, setUserProfile, onPeriodLogged, nextPeriodDate, daysUntilNext, isNextPeriodToday, monthlyLogs, prefillDate, predictedPhaseMap }) => {
   const [localData, setLocalData] = useState(cycleData || {
     lastPeriodDate: '', // period start date (kept for Dashboard compatibility)
     periodEndDate: '',
@@ -25,45 +26,48 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     'Nausea', 'Food Cravings', 'Anxiety', 'Insomnia'
   ];
 
-  // Calculate cycle phase based on date and period start/end
+  // Calculate cycle phase using the shared utility so it mirrors calendar predictions
   const calculateCyclePhase = () => {
-    const source = localData || {};
-    if (!source.lastPeriodDate) return;
-
-    const start = new Date(source.lastPeriodDate);
     const today = new Date();
-    const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24));
-    const dayInCycle = daysSinceStart % source.cycleLength;
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const key = `${year}-${month}-${day}`;
 
-    // Determine if we're currently in the menstruation window using explicit end date
-    let inMenstruation = false;
-    if (source.periodEndDate) {
-      const end = new Date(source.periodEndDate);
-      // include end day
-      if (today >= start && today <= end) inMenstruation = true;
-    } else {
-      // fallback to periodLength heuristic
-      if (dayInCycle < source.periodLength) inMenstruation = true;
+    // Prefer the calendar's authoritative predictedPhaseMap when available
+    if (predictedPhaseMap && predictedPhaseMap[key]) {
+      const p = predictedPhaseMap[key];
+      setCycleInfo({
+        currentDay: p.dayInCycle || 0,
+        phase: p.phaseLabel || '',
+        nextPeriod: '',
+        daysUntilNextPeriod: 0,
+        symptoms: []
+      });
+      return;
     }
 
-    const nextPeriodDate = new Date(start);
-    nextPeriodDate.setDate(nextPeriodDate.getDate() + source.cycleLength);
-    const daysUntil = Math.ceil((nextPeriodDate - today) / (1000 * 60 * 60 * 24));
-
-    let phase = '';
-    if (inMenstruation) {
-      phase = 'Menstruation';
-    } else if (dayInCycle < source.cycleLength * 0.33) {
-      phase = 'Follicular';
-    } else if (dayInCycle < source.cycleLength * 0.46) {
-      phase = 'Ovulation';
-    } else {
-      phase = 'Luteal';
+    // Fallback to computePhaseForDate logic
+    const res = computePhaseForDate(today, monthlyLogs, localData);
+    if (!res) {
+      setCycleInfo({ currentDay: 0, phase: '', nextPeriod: '', daysUntilNextPeriod: 0, symptoms: [] });
+      return;
     }
+
+    const phaseLabelMap = { menstruation: 'Period', follicular: 'Follicular', ovulation: 'Ovulation', luteal: 'Luteal' };
+    const phaseLabel = phaseLabelMap[res.phase] || '';
+
+    // Compute next period date using cycleLen and dayInCycle
+    const cycleLen = res.cycleLen || 28;
+    const dayInCycle = res.dayInCycle || 1;
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const nextPeriodDate = new Date(todayStart);
+    const daysUntil = Math.ceil((cycleLen - (dayInCycle - 1)));
+    nextPeriodDate.setDate(nextPeriodDate.getDate() + daysUntil);
 
     setCycleInfo({
-      currentDay: dayInCycle + 1,
-      phase,
+      currentDay: dayInCycle,
+      phase: phaseLabel,
       nextPeriod: nextPeriodDate.toLocaleDateString(),
       daysUntilNextPeriod: daysUntil,
       symptoms: []
@@ -78,7 +82,7 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     if (onPeriodLogged && localData.lastPeriodDate) {
       onPeriodLogged(localData.lastPeriodDate, localData.periodEndDate || null);
     }
-  }, [localData.lastPeriodDate, localData.periodEndDate, localData.cycleLength, localData.periodLength, setCycleData]);
+  }, [localData.lastPeriodDate, localData.periodEndDate, localData.cycleLength, localData.periodLength, setCycleData, monthlyLogs, predictedPhaseMap]);
 
   const handleStartDateChange = (e) => {
     setLocalData(prev => ({ ...prev, lastPeriodDate: e.target.value }));
@@ -140,7 +144,7 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
 
   const getPhaseColor = () => {
     switch (cycleInfo.phase) {
-      case 'Menstruation':
+      case 'Period':
         return '#e85d75';
       case 'Follicular':
         return '#f8a855';
@@ -342,7 +346,7 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
             <div className="phase-info">
               <h3>About This Phase</h3>
               <p className="phase-description">
-                {cycleInfo.phase === 'Menstruation' && 
+                {cycleInfo.phase === 'Period' && 
                   'Your body is shedding the uterine lining. Rest and stay hydrated.'}
                 {cycleInfo.phase === 'Follicular' && 
                   'Estrogen is rising. You may feel more energetic and motivated.'}
