@@ -37,7 +37,11 @@ const MonthCard = ({ keyStr, entry, onLogActual, onUpdateActual, onOpenLog }) =>
             const s = formatLocal(entry.actualStart);
             if (!entry.actualEnd) return `${s}${entry.isInitialCycle ? ' — as logged (locked)' : ''}`;
             const e = formatLocal(entry.actualEnd);
-            const days = Math.round((new Date(entry.actualEnd) - new Date(entry.actualStart)) / (1000*60*60*24)) + 1;
+            const [sy, sm, sd] = entry.actualStart.split('-').map(Number);
+            const [ey, em, ed] = entry.actualEnd.split('-').map(Number);
+            const startDate = new Date(sy, sm - 1, sd);
+            const endDate = new Date(ey, em - 1, ed);
+            const days = Math.round((endDate - startDate) / (1000*60*60*24)) + 1;
             return `${s} → ${e} (${days} days)${entry.isInitialCycle ? ' — as logged (locked)' : ''}`;
            })()}</span></div>
       </div>

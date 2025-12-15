@@ -287,11 +287,14 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
                     const log = monthlyLogs?.[monthKey];
                     if (!log) return 'No monthly log for this month.';
                     if (log.isInitialCycle) {
-                      // For initial cycle show only the user's entered actual dates (no predicted)
+                      // For initial cycle show only the user's entered actual dates (no predicted).
+                      // Parse YYYY-MM-DD into local Date to avoid timezone shifts.
                       if (!log.actualStart) return 'Actual: Not logged yet';
-                      const s = new Date(log.actualStart).toLocaleDateString();
+                      const [sy, sm, sd] = log.actualStart.split('-').map(Number);
+                      const s = new Date(sy, sm - 1, sd).toLocaleDateString();
                       if (!log.actualEnd) return `Actual: ${s}`;
-                      const e = new Date(log.actualEnd).toLocaleDateString();
+                      const [ey, em, ed] = log.actualEnd.split('-').map(Number);
+                      const e = new Date(ey, em - 1, ed).toLocaleDateString();
                       return `Actual: ${s} → ${e}`;
                     }
                     const pred = log.predictedStart ? `${new Date(log.predictedStart).toLocaleDateString()} → ${new Date(log.predictedEnd).toLocaleDateString()}` : 'Predicted: —';

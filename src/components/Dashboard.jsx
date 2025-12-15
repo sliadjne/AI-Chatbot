@@ -110,13 +110,60 @@ const Dashboard = () => {
       [year, month, day] = dateString.split('-').map(Number);
       month = month - 1; // month is 0-indexed in Date constructor
     } else if (dateString.includes('/')) {
-      [month, day, year] = dateString.split('/').map(Number);
-      month = month - 1; // month is 0-indexed in Date constructor
+      // Support both DD/MM/YYYY and MM/DD/YYYY. If the first part is >12
+      // assume DD/MM/YYYY (common in many locales). Otherwise prefer DD/MM/YYYY
+      // to match user expectations.
+      const parts = dateString.split('/').map(Number);
+      if (parts[0] > 12) {
+        // DD/MM/YYYY
+        day = parts[0];
+        month = parts[1] - 1;
+        year = parts[2];
+      } else if (parts[1] > 12) {
+        // MM/DD/YYYY
+        month = parts[0] - 1;
+        day = parts[1];
+        year = parts[2];
+      } else {
+        // Ambiguous (e.g., 05/06/2025) — assume DD/MM/YYYY
+        day = parts[0];
+        month = parts[1] - 1;
+        year = parts[2];
+      }
     } else {
       return null;
     }
     // Create date at midnight local time
     return new Date(year, month, day, 0, 0, 0, 0);
+  };
+
+  // Normalize various date inputs into YYYY-MM-DD strings for consistent storage
+  const toYMD = (dateString) => {
+    if (!dateString) return null;
+    if (dateString.includes('-')) {
+      const parts = dateString.split('-');
+      if (parts[0].length === 4) return dateString; // already YYYY-MM-DD
+      // possibly DD-MM-YYYY
+      if (parts[2] && parts[2].length === 4) {
+        const [d, m, y] = parts.map(Number);
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      }
+    }
+    if (dateString.includes('/')) {
+      const p = dateString.split('/').map(Number);
+      // DD/MM/YYYY vs MM/DD/YYYY: prefer DD/MM/YYYY when ambiguous
+      if (p[0] > 12) {
+        // DD/MM/YYYY
+        return `${p[2]}-${String(p[1]).padStart(2,'0')}-${String(p[0]).padStart(2,'0')}`;
+      }
+      if (p[1] > 12) {
+        // MM/DD/YYYY
+        return `${p[2]}-${String(p[0]).padStart(2,'0')}-${String(p[1]).padStart(2,'0')}`;
+      }
+      // ambiguous -> DD/MM/YYYY
+      return `${p[2]}-${String(p[1]).padStart(2,'0')}-${String(p[0]).padStart(2,'0')}`;
+    }
+    return null;
   };
 
   const phaseForDate = (dateObj) => {
@@ -443,8 +490,9 @@ const Dashboard = () => {
 
         if (!next[key]) next[key] = { predictedStart: null, predictedEnd: null, actualStart: null, actualEnd: null, createdAt: new Date().toISOString() };
 
-        if (predictedMap[key]) {
-          // Overwrite predicted values with the authoritative prediction
+        // Only write predicted values into empty months that don't have actuals
+        // or are not the immutable initial cycle.
+        if (predictedMap[key] && !next[key].actualStart && !next[key].isInitialCycle) {
           next[key].predictedStart = predictedMap[key].predictedStart;
           next[key].predictedEnd = predictedMap[key].predictedEnd;
         }
@@ -509,36 +557,29 @@ const Dashboard = () => {
   };
 
   const recordActualPeriod = (actualStartStr, actualEndStr) => {
-    if (!actualStartStr) return;
-    const actualDate = parseLocalDate(actualStartStr);
+    // For the initial log, use the calendar/tracker Period Start/End when available
+    const src = getSourceCycle();
+    const finalStart = (src && src.startDate) ? src.startDate : (toYMD(actualStartStr) || actualStartStr || null);
+    const finalEnd = (src && src.periodEndDate) ? src.periodEndDate : (toYMD(actualEndStr) || actualEndStr || null);
+    if (!finalStart) return;
+    const actualDate = parseLocalDate(finalStart);
     if (!actualDate) return;
     // Mark first entry date if this is the earliest actual we have
-    if (!firstEntryDate) setFirstEntryDate(actualStartStr);
+    if (!firstEntryDate) setFirstEntryDate(finalStart);
     const key = monthKeyFromDate(actualDate);
     setMonthlyLogs((prev) => {
       const next = { ...prev };
       const hasAnyActual = Object.values(prev || {}).some((v) => v && v.actualStart);
 
-      // If this is the first-ever actual logged, lock it to either the user-provided date
-      // or fall back to the calendar's predicted date for that month
-      if (!hasAnyActual) {
-        const baseStart = getSourceCycle()?.startDate || actualStartStr;
-        const cycleLen = cycleData?.cycleLength ? Number(cycleData.cycleLength) : 28;
-        const periodLen = cycleData?.periodLength ? Number(cycleData.periodLength) : 5;
-        const mIdx = actualDate.getFullYear() * 12 + actualDate.getMonth();
-        const predictedMap = computePredictedMap(baseStart, cycleLen, periodLen, mIdx, mIdx);
-        const pred = predictedMap[key];
+      // Always set the month's actuals to reflect the calendar/tracker action (override prior incorrect data)
+      const src = getSourceCycle();
+      const finalStart = (src && src.startDate) ? src.startDate : (toYMD(actualStartStr) || actualStartStr || null);
+      const finalEnd = (src && src.periodEndDate) ? src.periodEndDate : (toYMD(actualEndStr) || actualEndStr || null);
 
-        // For the initial cycle we respect only the user's supplied dates.
-        const finalStart = actualStartStr || null;
-        const finalEnd = actualEndStr || null;
-
-        next[key] = { predictedStart: null, predictedEnd: null, actualStart: finalStart, actualEnd: finalEnd, isInitialCycle: true, createdAt: new Date().toISOString() };
-      } else {
-        if (!next[key]) next[key] = { predictedStart: null, predictedEnd: null, actualStart: null, actualEnd: null, createdAt: new Date().toISOString() };
-        if (!next[key].actualStart) next[key].actualStart = actualStartStr || null;
-        if (!next[key].actualEnd) next[key].actualEnd = actualEndStr || null;
-      }
+      if (!next[key]) next[key] = { predictedStart: null, predictedEnd: null, actualStart: null, actualEnd: null, createdAt: new Date().toISOString() };
+      next[key].actualStart = finalStart;
+      next[key].actualEnd = finalEnd;
+      if (!hasAnyActual) next[key].isInitialCycle = true;
 
       return next;
     });
@@ -556,9 +597,9 @@ const Dashboard = () => {
       const next = { ...prev };
       if (!next[monthKey]) {
         // create a new slot if missing
-        next[monthKey] = { predictedStart: null, predictedEnd: null, actualStart: actualStartStr || null, actualEnd: actualEndStr || null, createdAt: new Date().toISOString() };
+        next[monthKey] = { predictedStart: null, predictedEnd: null, actualStart: toYMD(actualStartStr) || null, actualEnd: toYMD(actualEndStr) || null, createdAt: new Date().toISOString() };
       } else {
-        next[monthKey] = { ...next[monthKey], actualStart: actualStartStr || null, actualEnd: actualEndStr || null };
+        next[monthKey] = { ...next[monthKey], actualStart: toYMD(actualStartStr) || null, actualEnd: toYMD(actualEndStr) || null };
       }
       return next;
     });
