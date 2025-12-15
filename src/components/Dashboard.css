@@ -385,6 +385,23 @@
 .survey-insights-section h4{margin:0 0 8px 0;color:#7a2b33}
 .survey-insight-line{margin:6px 0;color:#4a5568;font-size:14px}
 
+/* Enhanced survey insights */
+.survey-insights-section{background:#fffefc;border-radius:12px;padding:12px;border:1px solid rgba(160,160,160,0.06)}
+.survey-insights-section .insights-header{display:flex;gap:12px;align-items:center}
+.survey-insights-section .insights-icon{font-size:22px}
+.survey-insights-section .insights-title{display:flex;flex-direction:row;align-items:center;gap:10px}
+.survey-insights-section .insights-title h4{margin:0;color:#2d3748}
+.survey-insights-section .insights-badge{background:#f7fafc;border-radius:999px;padding:4px 8px;font-weight:700;font-size:12px;color:#718096;border:1px solid rgba(226,232,240,0.9)}
+.survey-insights-section.low{border-left:4px solid #48bb78}
+.survey-insights-section.medium{border-left:4px solid #ed8936}
+.survey-insights-section.high{border-left:4px solid #f56565;background:linear-gradient(90deg,#fff6f7,#fffefc)}
+.survey-insights-section .insights-list{margin-top:10px;padding-left:18px}
+.survey-insights-section .insight-item{margin:8px 0;color:#4a5568;font-size:14px;line-height:1.4}
+.survey-insights-section .insights-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.survey-insights-section .btn.small{padding:6px 10px;border-radius:8px;font-weight:700}
+.survey-insights-section .btn.small.secondary{background:#f7fafc;border:1px solid rgba(226,232,240,0.9);color:#2d3748}
+.survey-insights-section .btn.small{background:#e87888;color:white}
+
 .calendar-nav-btn {
   width: 40px;
   height: 40px;

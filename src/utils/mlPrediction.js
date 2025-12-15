@@ -261,10 +261,10 @@ const generateInsights = (features, riskScore, prediction) => {
 /**
  * Calculate cycle phase distribution for visualization
  */
-export const calculateCyclePhaseDistribution = (cycleData, surveyResults, selectedDate) => {
-  const source = surveyResults?.answers || cycleData || {};
-  const cycleLength = Number(source.cycle_length) || Number(cycleData?.cycleLength) || 28;
-  const periodLength = Number(source.bleed_days) || Number(cycleData?.periodLength) || 5;
+export const calculateCyclePhaseDistribution = (cycleData, _surveyResults, selectedDate) => {
+  // Use tracker `cycleData` only; survey results are for AI insights only and should not influence calendar visualizations
+  const cycleLength = Number(cycleData?.cycleLength) || 28;
+  const periodLength = Number(cycleData?.periodLength) || 5;
   
   const menstruation = periodLength;
   const follicular = Math.max(0, 13 - periodLength);
@@ -282,11 +282,11 @@ export const calculateCyclePhaseDistribution = (cycleData, surveyResults, select
 /**
  * Generate Gantt chart data for cycle phases
  */
-export const generateCycleGanttData = (cycleData, surveyResults, months = 3) => {
-  const source = surveyResults?.answers || cycleData || {};
-  const cycleLength = Number(source.cycle_length) || Number(cycleData?.cycleLength) || 28;
-  const periodLength = Number(source.bleed_days) || Number(cycleData?.periodLength) || 5;
-  const startDate = source.last_period || cycleData?.lastPeriodDate || new Date().toISOString().split('T')[0];
+export const generateCycleGanttData = (cycleData, _surveyResults, months = 3) => {
+  // Use tracker `cycleData` only; do not use survey inputs for visualizations
+  const cycleLength = Number(cycleData?.cycleLength) || 28;
+  const periodLength = Number(cycleData?.periodLength) || 5;
+  const startDate = cycleData?.lastPeriodDate || new Date().toISOString().split('T')[0];
   
   const ganttData = [];
   let currentDate = new Date(startDate);

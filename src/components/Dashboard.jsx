@@ -88,16 +88,6 @@ const Dashboard = () => {
         periodLength: Number(cycleData.periodLength) || 5,
       };
     }
-    if (surveyResults && surveyResults.answers && surveyResults.answers.last_period) {
-      const a = surveyResults.answers;
-      return {
-        startDate: a.last_period || null,
-        periodEndDate: a.period_end || null,
-        ongoing: a.ongoing || false,
-        cycleLength: Number(a.cycle_length) || 28,
-        periodLength: Number(a.bleed_days) || 5,
-      };
-    }
     return null;
   };
 
@@ -167,25 +157,12 @@ const Dashboard = () => {
   };
 
   const phaseForDate = (dateObj) => {
-    // Allow survey answers to annotate explicit period dates (without replacing tracker base)
-    const surveyA = surveyResults?.answers;
-
     // Format the calendar date as YYYY-MM-DD string
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getDate()).padStart(2, '0');
     const checkDateStr = `${year}-${month}-${day}`;
 
-    // If survey provided explicit last_period/period_end, honor those days as menstruation overlays
-    if (surveyA && surveyA.last_period) {
-      const s = surveyA.last_period;
-      const e = surveyA.period_end;
-      if (surveyA.ongoing) {
-        if (checkDateStr >= s) return 'menstruation';
-      } else if (e) {
-        if (checkDateStr >= s && checkDateStr <= e) return 'menstruation';
-      }
-    }
 
     const src = getSourceCycle();
     if (!src || !src.startDate) return null;
@@ -336,7 +313,7 @@ const Dashboard = () => {
 
   // Determine whether the user has provided any input at all
   const profileCount = [userProfile?.height, userProfile?.weight, userProfile?.age].filter(Boolean).length;
-  const hasAnyInput = uploadedData.length > 0 || dayEntriesCount > 0 || !!surveyResults || !!(cycleData && cycleData.lastPeriodDate) || profileCount > 0;
+  const hasAnyInput = uploadedData.length > 0 || dayEntriesCount > 0 || !!(cycleData && cycleData.lastPeriodDate) || profileCount > 0;
 
   // Status: only show when survey results exist; otherwise show empty
   const displayStatus = surveyResults && surveyResults.prediction ? (surveyResults.prediction.includes('Possible') ? 'Imbalanced' : 'Balanced') : '';
@@ -347,10 +324,8 @@ const Dashboard = () => {
     if (cycleData && cycleData.cycleLength) {
       const cl = Number(cycleData.cycleLength);
       cycleRegularityPercent = (cl >= 24 && cl <= 35) ? 95 : 40;
-    } else if (surveyResults) {
-      cycleRegularityPercent = surveyResults.answers?.regularity === 'regular' ? 95 : 40;
     } else {
-      cycleRegularityPercent = 75;
+      cycleRegularityPercent = null;
     }
   }
 
@@ -361,10 +336,8 @@ const Dashboard = () => {
       const totalSymptoms = Object.values(dayEntries).reduce((sum, e) => sum + ((e.symptoms || []).length), 0);
       const avgSymptoms = totalSymptoms / dayEntriesCount; // average per entry
       symptomSeverityPercent = Math.min(100, Math.round((avgSymptoms / 6) * 100));
-    } else if (surveyResults) {
-      symptomSeverityPercent = Math.min(100, (surveyResults.vector?.[2] || 0) * 10);
     } else {
-      symptomSeverityPercent = 55;
+      symptomSeverityPercent = null;
     }
   }
 
@@ -379,7 +352,7 @@ const Dashboard = () => {
     // day entries contribution
     dataCompletenessPercent += Math.min(30, dayEntriesCount * 2);
     // survey presence bonus
-    if (surveyResults) dataCompletenessPercent += 10;
+
     dataCompletenessPercent = Math.min(100, dataCompletenessPercent);
   }
 
@@ -875,14 +848,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {surveyResults && (
-                <div className="survey-insights-section">
-                  <h4>Your Cycle Insights (Based on Your Survey)</h4>
-                  {generateSurveyInsights(surveyResults).map((line, idx) => (
-                    <p key={idx} className="survey-insight-line">{line}</p>
-                  ))}
-                </div>
-              )}
+              {/* survey insights moved below the Survey widget for better UX */}
 
               <div className="compact-metrics">
                 <div className="metric-row"><strong>Regularity:</strong> {cycleRegularityPercent}%</div>
@@ -896,6 +862,36 @@ const Dashboard = () => {
                 <h4>Survey</h4>
                 <SurveyTab existingResult={surveyResults} onComplete={(results) => setSurveyResults(results)} onReset={() => setSurveyResults(null)} />
               </div>
+              {surveyResults && (() => {
+                const severity = (() => {
+                  const a = surveyResults.answers || {};
+                  if (a.pms_severity === 'severe' || a.regularity === 'irregular' || (Number(a.cycle_length) >= 35 && a.acne === 'yes')) return 'high';
+                  if (a.pms_severity === 'moderate' || (a.sleep_hours && Number(a.sleep_hours) <= 6) || a.stress === 'high' || a.fatigue === 'yes') return 'medium';
+                  return 'low';
+                })();
+
+                const lines = generateSurveyInsights(surveyResults);
+                return (
+                  <div className={`survey-insights-section ${severity}`} style={{ marginTop: '12px' }}>
+                    <div className="insights-header">
+                      <div className="insights-icon">{severity === 'high' ? '⚠️' : (severity === 'medium' ? '💡' : '✅')}</div>
+                      <div className="insights-title">
+                        <h4>Your Cycle Insights</h4>
+                        <div className="insights-badge">{severity === 'high' ? 'Attention' : (severity === 'medium' ? 'Watch' : 'Healthy')}</div>
+                      </div>
+                    </div>
+                    <ul className="insights-list">
+                      {lines.map((line, idx) => (
+                        <li key={idx} className="insight-item">{line}</li>
+                      ))}
+                    </ul>
+                    <div className="insights-actions">
+                      <button className="btn small secondary" onClick={() => setActiveTab('logs')}>Log period</button>
+                      <button className="btn small" onClick={() => setActiveTab('tracker')}>Open tracker</button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="tracker-bottom-left">
               {/* Reminder widget above calendar — only in Cycle & Tracker tab */}
@@ -1091,12 +1087,12 @@ const Dashboard = () => {
             )}
             
             {/* Cycle Visualizations */}
-            {(surveyResults || cycleData?.lastPeriodDate) && (
+            {cycleData?.lastPeriodDate && (
               <div className="visualizations-section">
                 <h3>📊 Cycle Phase Visualizations</h3>
                 <CycleVisualizations 
                   cycleData={cycleData} 
-                  surveyResults={surveyResults} 
+                  surveyResults={null} 
                   selectedDate={selectedDate}
                 />
               </div>
