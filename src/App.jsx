@@ -12,7 +12,7 @@ const AppContent = () => {
   const [chatHistory, seeChatHistory] = useState([]);
   const [open, setOpen] = useState(true);
   const [closing, setClosing] = useState(false);
-  const { mlPrediction, userFeatures } = useMLPrediction();
+  const { mlPrediction, userFeatures, latestDailySummary, latestRecommendation } = useMLPrediction();
 
   const handleClose = () => {
     setClosing(true);
@@ -60,8 +60,17 @@ const AppContent = () => {
 - Menstrual Regularity: ${userFeatures.Menstrual_Irregularity === 1 ? 'Irregular' : 'Regular'}
 - Estimated BMI: ${userFeatures.BMI.toFixed(1)}
 - Current Phase: Based on cycle data
+`;
 
-Use this context to provide more personalized, relevant advice. If the user has irregular cycles or possible PCOS pattern, suggest lifestyle modifications, stress management, and when appropriate, mention consulting healthcare professionals. Always maintain a supportive, non-diagnostic tone.`;
+      // Append latest transient AI outputs when available (non-diagnostic)
+      if (latestDailySummary) {
+        userContext += `\nLatest Daily Summary (${latestDailySummary.date}): ${latestDailySummary.summary}`;
+      }
+      if (latestRecommendation) {
+        userContext += `\nAdaptive Suggestion: ${latestRecommendation.recommendation}`;
+      }
+
+      userContext += `\n\nUse this context to provide more personalized, relevant advice. If the user has irregular cycles or possible PCOS pattern, suggest lifestyle modifications, stress management, and when appropriate, mention consulting healthcare professionals. Always maintain a supportive, non-diagnostic tone.`;
     }
 
     const prompt = 
@@ -193,7 +202,7 @@ Use this context to provide more personalized, relevant advice. If the user has 
        <div className="chat-header">
         <div className="header-info">
           <ChatbotIcon />
-          <h2 className="logo-text"> Chatbox</h2>
+          <h2 className="logo-text"> Pennly Buddy</h2>
         </div>
         <button aria-label="Close chatbot" className="material-symbols-rounded" onClick={handleClose}>keyboard_arrow_down</button>
         </div> 
@@ -202,11 +211,27 @@ Use this context to provide more personalized, relevant advice. If the user has 
         <div className="chat-body">
         <div className="message bot-message">
           <ChatbotIcon />
-          <p className="message-text">
-            Hi girly, I’m Pennly 🌼 <br />
-            I help explain your hormonal cycle, its phases, and the changes you may notice along the way 📘✨ <br />
-            Everything here is meant to support learning and understanding at your own pace 🤍
-          </p>
+          <div style={{maxWidth: 320}}>
+            <p className="message-text">
+              Hi girly, I’m Pennly 🌼 <br />
+              I help explain your hormonal cycle, its phases, and the changes you may notice along the way 📘✨ <br />
+              Everything here is meant to support learning and understanding at your own pace 🤍
+            </p>
+
+            {latestDailySummary ? (
+              <div style={{marginTop:8, padding:8, borderRadius:8, background:'#fffefc', border:'1px solid rgba(232,120,136,0.06)'}}>
+                <strong>Latest summary:</strong>
+                <div style={{fontSize:13, color:'#4a5568', marginTop:6}}>{latestDailySummary.summary}</div>
+              </div>
+            ) : null}
+
+            {latestRecommendation ? (
+              <div style={{marginTop:8, padding:8, borderRadius:8, background:'#ffffff', border:'1px solid rgba(226,232,240,0.85)'}}>
+                <strong>Suggestion:</strong>
+                <div style={{fontSize:13, color:'#4a5568', marginTop:6}}>{latestRecommendation.recommendation}</div>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {/* Render chat history */}

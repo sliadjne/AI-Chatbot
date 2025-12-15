@@ -352,6 +352,7 @@ const Dashboard = () => {
   }
 
   const { setMlPrediction, setUserFeatures } = useMLPrediction();
+  const { setLatestDailySummary, setLatestRecommendation } = useMLPrediction();
 
   // Calculate ML prediction
   // Derive cycle statistics from `monthlyLogs` when available (prefer actuals over predicted)
@@ -832,6 +833,27 @@ const Dashboard = () => {
   };
 
   const recentEntry = getMostRecentEntry();
+
+  // Update shared context with latest transient AI summary and adaptive recommendation
+  useEffect(() => {
+    // compute latest daily summary if we have entries
+    if (Object.keys(dayEntries || {}).length > 0) {
+      const keys = Object.keys(dayEntries).sort();
+      const lastKey = keys[keys.length - 1];
+      const lastEntry = dayEntries[lastKey];
+      const phaseLabel = (predictedPhaseMap && predictedPhaseMap[lastKey]) ? predictedPhaseMap[lastKey].phaseLabel : null;
+      const isLogged = !!(monthlyLogs && monthlyLogs[lastKey?.slice(0,7)] && monthlyLogs[lastKey.slice(0,7)].actualStart);
+      const dailySummary = generateDailyAISummary({ date: lastKey, dayEntry: lastEntry, context: { userProfile, surveyResults, phaseLabel, isLogged } });
+      setLatestDailySummary(dailySummary);
+    } else {
+      setLatestDailySummary(null);
+    }
+
+    // Build consolidated context and compute recommendation
+    const ctx = buildAIContext({ userProfile, surveyResults, dayEntries, monthlyLogs, predictedPhaseMap });
+    const rec = generateAdaptiveRecommendation(ctx);
+    setLatestRecommendation(rec);
+  }, [dayEntries, surveyResults, monthlyLogs, predictedPhaseMap, userProfile, setLatestDailySummary, setLatestRecommendation]);
 
   return (
     <div className="dashboard-container">
