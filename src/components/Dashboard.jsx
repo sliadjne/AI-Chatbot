@@ -908,36 +908,15 @@ const Dashboard = () => {
                 <h4>Survey</h4>
                 <SurveyTab existingResult={surveyResults} onComplete={(results) => setSurveyResults(results)} onReset={() => setSurveyResults(null)} />
               </div>
-              {surveyResults && (() => {
-                const severity = (() => {
-                  const a = surveyResults.answers || {};
-                  if (a.pms_severity === 'severe' || a.regularity === 'irregular' || (Number(a.cycle_length) >= 35 && a.acne === 'yes')) return 'high';
-                  if (a.pms_severity === 'moderate' || (a.sleep_hours && Number(a.sleep_hours) <= 6) || a.stress === 'high' || a.fatigue === 'yes') return 'medium';
-                  return 'low';
-                })();
-
-                const lines = generateSurveyInsights(surveyResults);
-                return (
-                  <div className={`survey-insights-section ${severity}`} style={{ marginTop: '12px' }}>
-                    <div className="insights-header">
-                      <div className="insights-icon">{severity === 'high' ? '⚠️' : (severity === 'medium' ? '💡' : '✅')}</div>
-                      <div className="insights-title">
-                        <h4>Your Cycle Insights</h4>
-                        <div className="insights-badge">{severity === 'high' ? 'Attention' : (severity === 'medium' ? 'Watch' : 'Healthy')}</div>
-                      </div>
-                    </div>
-                    <ul className="insights-list">
-                      {lines.map((line, idx) => (
-                        <li key={idx} className="insight-item">{line}</li>
-                      ))}
-                    </ul>
-                    <div className="insights-actions">
-                      <button className="btn small secondary" onClick={() => setActiveTab('logs')}>Log period</button>
-                      <button className="btn small" onClick={() => setActiveTab('tracker')}>Open tracker</button>
-                    </div>
+              {surveyResults ? (
+                <div className="survey-cta" style={{ marginTop: 12 }}>
+                  <div className="cta-text">Go here to see your results!</div>
+                  <div style={{ marginTop: 0 }}>
+                    <button className="btn small" onClick={() => setActiveTab('dataset')}>View AI Insights →</button>
                   </div>
-                );
-              })()}
+                </div>
+              ) : null}
+              {/* Survey insights summary intentionally omitted from Cycle & Tracker — detailed view lives in AI Insights tab */}
             </div>
             <div className="tracker-bottom-left">
               {/* Reminder widget above calendar — only in Cycle & Tracker tab */}
@@ -1125,6 +1104,31 @@ const Dashboard = () => {
                           </div>
                         </div>
                       )}
+                    {surveyResults && (() => {
+                      const lines = generateSurveyInsights(surveyResults) || [];
+                      const a = surveyResults.answers || {};
+                      const severity = (a.pms_severity === 'severe' || a.regularity === 'irregular' || (Number(a.cycle_length) >= 35 && a.acne === 'yes')) ? 'high' : (a.pms_severity === 'moderate' || (a.sleep_hours && Number(a.sleep_hours) <= 6) || a.stress === 'high' || a.fatigue === 'yes') ? 'medium' : 'low';
+                      return (
+                        <div className={`survey-insights-section ${severity}`} style={{ margin: '12px 0' }}>
+                          <div className="insights-header">
+                            <div className="insights-icon">{severity === 'high' ? '⚠️' : (severity === 'medium' ? '💡' : '✅')}</div>
+                            <div className="insights-title">
+                              <h4>Your Cycle Insights</h4>
+                              <div className="insights-badge">{severity === 'high' ? 'Attention' : (severity === 'medium' ? 'Watch' : 'Healthy')}</div>
+                            </div>
+                          </div>
+                          <ul className="insights-list" style={{ marginTop: 10, paddingLeft: 18 }}>
+                            {lines.map((line, idx) => (
+                              <li key={idx} className="insight-item">{line}</li>
+                            ))}
+                          </ul>
+                          <div className="insights-actions">
+                            <button className="btn small secondary" onClick={() => setActiveTab('logs')}>Log period</button>
+                            <button className="btn small" onClick={() => setActiveTab('tracker')}>Open tracker</button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {mlPrediction.insights.map((insight, idx) => (
                       <div key={idx} className={`insight-card ${insight.type}`}>
                         <div className="insight-icon">

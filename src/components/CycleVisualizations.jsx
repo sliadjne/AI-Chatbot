@@ -12,11 +12,13 @@ const CycleVisualizations = ({ cycleData, surveyResults, selectedDate }) => {
   const phaseDistribution = calculateCyclePhaseDistribution(cycleData, surveyResults, selectedDate);
   const ganttData = generateCycleGanttData(cycleData, surveyResults, 3);
   
-  // Prepare pie chart data
+  // Prepare pie chart data (include percent for labels)
+  const totalDays = phaseDistribution.reduce((s, p) => s + (p.days || 0), 0) || 1;
   const pieData = phaseDistribution.map(phase => ({
     name: phase.name,
     value: phase.days,
-    color: phase.color
+    color: phase.color || COLORS[phase.name] || '#ccc',
+    percent: ((phase.days || 0) / totalDays) * 100
   }));
   
   // Prepare Gantt chart data (grouped by phase)
@@ -53,8 +55,9 @@ const CycleVisualizations = ({ cycleData, surveyResults, selectedDate }) => {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
+                label={({ index }) => `${pieData[index].name}: ${Math.round(pieData[index].percent)}%`}
+                outerRadius={90}
+                innerRadius={40}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -62,8 +65,8 @@ const CycleVisualizations = ({ cycleData, surveyResults, selectedDate }) => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
-              <Legend />
+              <Tooltip formatter={(value) => `${value} days`} />
+              <Legend verticalAlign="bottom" iconType="circle" />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -71,16 +74,16 @@ const CycleVisualizations = ({ cycleData, surveyResults, selectedDate }) => {
         <div className="chart-card">
           <h3>Cycle Phase Timeline (Gantt View)</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={ganttChartData} layout="vertical">
+            <BarChart data={ganttChartData} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="month" type="category" width={100} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="Menstruation" stackId="a" fill={COLORS.Menstruation} />
-              <Bar dataKey="Follicular" stackId="a" fill={COLORS.Follicular} />
-              <Bar dataKey="Ovulation" stackId="a" fill={COLORS.Ovulation} />
-              <Bar dataKey="Luteal" stackId="a" fill={COLORS.Luteal} />
+              <XAxis type="number" domain={[0, 32]} ticks={[0, 8, 16, 24, 32]} />
+              <YAxis dataKey="month" type="category" width={110} />
+              <Tooltip formatter={(value, name) => [`${value} days`, name]} />
+              <Legend verticalAlign="bottom" iconType="square" />
+              <Bar dataKey="Menstruation" stackId="a" fill={COLORS.Menstruation} barSize={18} />
+              <Bar dataKey="Follicular" stackId="a" fill={COLORS.Follicular} barSize={18} />
+              <Bar dataKey="Ovulation" stackId="a" fill={COLORS.Ovulation} barSize={18} />
+              <Bar dataKey="Luteal" stackId="a" fill={COLORS.Luteal} barSize={18} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -90,11 +93,11 @@ const CycleVisualizations = ({ cycleData, surveyResults, selectedDate }) => {
         <h3>Phase Breakdown</h3>
         <div className="phase-grid">
           {phaseDistribution.map((phase, idx) => (
-            <div key={idx} className="phase-item" style={{ borderLeftColor: phase.color }}>
+            <div key={idx} className="phase-item" style={{ borderLeftColor: phase.color, ['--phase-color']: phase.color }}>
               <div className="phase-name">{phase.name}</div>
               <div className="phase-days">{phase.days} days</div>
               <div className="phase-percentage">
-                {((phase.days / phaseDistribution.reduce((sum, p) => sum + p.days, 0)) * 100).toFixed(1)}%
+                {((phase.days / totalDays) * 100).toFixed(1)}%
               </div>
             </div>
           ))}

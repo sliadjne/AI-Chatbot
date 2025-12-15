@@ -402,6 +402,35 @@
 .survey-insights-section .btn.small.secondary{background:#f7fafc;border:1px solid rgba(226,232,240,0.9);color:#2d3748}
 .survey-insights-section .btn.small{background:#e87888;color:white}
 
+/* Compact variant when shown inside AI Insights area */
+.insights-section .survey-insights-section{
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+.insights-section .survey-insights-section .insights-icon{font-size:18px}
+.insights-section .survey-insights-section .insights-badge{padding:3px 6px;font-size:11px}
+.insights-section .survey-insights-section .insight-item{margin:6px 0;font-size:13px}
+
+/* CTA under Survey in Cycle & Tracker */
+.survey-cta{
+  background:#fffefc;
+  border:1px solid #e2e8f0;
+  padding:10px 12px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.survey-cta .cta-text{
+  color:#2d3748;
+  font-weight:600;
+}
+@media (max-width:768px){
+  .survey-cta{flex-direction:column;align-items:flex-start}
+}
+
 .calendar-nav-btn {
   width: 40px;
   height: 40px;
@@ -1062,6 +1091,25 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Improve chart alignment and sizing */
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.chart-card .recharts-wrapper {
+  min-height: 260px;
+}
+
+.chart-card .recharts-default-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .chart-card h3 {
   font-size: 16px;
   font-weight: 700;
@@ -1106,7 +1154,7 @@
 .phase-days {
   font-size: 24px;
   font-weight: 700;
-  color: rgb(232, 120, 136);
+  color: var(--phase-color, rgb(232, 120, 136));
   margin-bottom: 5px;
 }
 
