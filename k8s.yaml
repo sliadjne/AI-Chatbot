@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: menstrual-tracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: menstrual-tracker
+  template:
+    metadata:
+      labels:
+        app: menstrual-tracker
+    spec:
+      containers:
+      - name: menstrual-tracker
+        image: menstrual-tracker-app:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: menstrual-tracker-service
+spec:
+  selector:
+    app: menstrual-tracker
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
