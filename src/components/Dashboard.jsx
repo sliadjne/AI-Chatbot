@@ -661,6 +661,32 @@ const Dashboard = () => {
     return d ? d.toLocaleDateString() : '–';
   };
 
+  // Derive the most recent actual period end (or start if no end) from monthly logs
+  const lastActualFromLogs = useMemo(() => {
+    const entries = Object.values(monthlyLogs || {});
+    let latest = null;
+    entries.forEach((e) => {
+      if (!e || !e.actualStart) return;
+      const lastYMD = e.actualEnd || e.actualStart;
+      const d = parseLocalDate(lastYMD);
+      if (!d) return;
+      if (!latest || d > latest.date) {
+        latest = { date: d, ymd: lastYMD, start: e.actualStart, end: e.actualEnd };
+      }
+    });
+    return latest;
+  }, [monthlyLogs]);
+
+  const lastActualLength = useMemo(() => {
+    if (!lastActualFromLogs) return null;
+    if (lastActualFromLogs.start && lastActualFromLogs.end) {
+      const s = parseLocalDate(lastActualFromLogs.start);
+      const e = parseLocalDate(lastActualFromLogs.end);
+      if (s && e) return Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return null;
+  }, [lastActualFromLogs]);
+
   const getMostRecentEntry = () => {
     const keys = Object.keys(dayEntries || {});
     if (!keys.length) return null;
@@ -767,8 +793,8 @@ const Dashboard = () => {
 
                 <div className="summary-card">
                   <h4>Last Period</h4>
-                  <div className="summary-value">{formatLocalFromYMD(getSourceCycle()?.startDate)}</div>
-                  <div className="summary-meta">Length {getSourceCycle()?.cycleLength || '–'} days</div>
+                  <div className="summary-value">{formatLocalFromYMD(lastActualFromLogs?.ymd || getSourceCycle()?.startDate)}</div>
+                  <div className="summary-meta">Length {lastActualLength || getSourceCycle()?.periodLength || getSourceCycle()?.cycleLength || '–'} days</div>
                 </div>
 
                 <div className="summary-card">
