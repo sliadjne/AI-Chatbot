@@ -5,9 +5,11 @@ const MLPredictionContext = createContext(null);
 export const MLPredictionProvider = ({ children }) => {
   const [mlPrediction, setMlPrediction] = useState(null);
   const [userFeatures, setUserFeatures] = useState(null);
+  const [latestDailySummary, setLatestDailySummary] = useState(null);
+  const [latestRecommendation, setLatestRecommendation] = useState(null);
 
   return (
-    <MLPredictionContext.Provider value={{ mlPrediction, setMlPrediction, userFeatures, setUserFeatures }}>
+    <MLPredictionContext.Provider value={{ mlPrediction, setMlPrediction, userFeatures, setUserFeatures, latestDailySummary, setLatestDailySummary, latestRecommendation, setLatestRecommendation }}>
       {children}
     </MLPredictionContext.Provider>
   );
