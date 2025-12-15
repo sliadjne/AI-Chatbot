@@ -53,10 +53,13 @@ const simplePredict = (vec, answers) => {
 
 const fatigueIsYes = (answers) => answers.fatigue === 'yes';
 
-const SurveyTab = ({ onComplete }) => {
+const SurveyTab = ({ onComplete, existingResult = null, onReset }) => {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [finished, setFinished] = useState(false);
+
+  // If an existingResult is provided, the survey is considered locked until the user retakes it
+  const locked = !!existingResult;
 
   const current = QUESTIONS[index];
 
@@ -84,53 +87,74 @@ const SurveyTab = ({ onComplete }) => {
   const handlePrev = () => {
     if (index > 0) setIndex(index - 1);
   };
+  // Build content explicitly to avoid nested ternary JSX issues
+  let surveyContent = null;
+  if (locked) {
+    surveyContent = (
+      <div className="survey-locked">
+        <p>You've already completed this survey.</p>
+        <div className="survey-locked-actions">
+          <button onClick={() => {
+            const ok = window.confirm('Retaking will reset your previous answers. Continue?');
+            if (ok) {
+              if (typeof onReset === 'function') onReset();
+              setAnswers({}); setIndex(0); setFinished(false);
+            }
+          }}>Retake survey</button>
+        </div>
+      </div>
+    );
+  } else if (!finished) {
+    surveyContent = (
+      <div className="question-area">
+        <p className="question-count">Question {index + 1} of {QUESTIONS.length}</p>
+        <p className="question-text">{current.text}</p>
+
+        {current.type === 'text' && (
+          <input type="text" value={answers[current.id] || ''} onChange={handleChange} />
+        )}
+
+        {current.type === 'number' && (
+          <input type="number" value={answers[current.id] || ''} onChange={handleChange} />
+        )}
+
+        {current.type === 'select' && (
+          <div className="options">
+            {current.options.map((opt) => (
+              <label key={opt} className="option-label">
+                <input
+                  type="radio"
+                  name={current.id}
+                  value={opt}
+                  checked={answers[current.id] === opt}
+                  onChange={handleChange}
+                />
+                <span>{opt}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className="survey-actions">
+          <button onClick={handlePrev} disabled={index === 0}>Back</button>
+          <button onClick={handleNext}>{index === QUESTIONS.length - 1 ? 'Finish' : 'Next'}</button>
+        </div>
+      </div>
+    );
+  } else {
+    surveyContent = (
+      <div className="results-area">
+        <h3>Thanks — here is a short summary</h3>
+        <p><strong>Pattern:</strong> {simplePredict(encodeAnswers(answers), answers)}</p>
+        <p className="results-note">This is an indicative pattern only and not a medical diagnosis. Consider tracking for a few cycles and consult a healthcare professional if concerns persist.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="survey-tab">
       <h2>Menstrual Health Survey</h2>
-
-      {!finished ? (
-        <div className="question-area">
-          <p className="question-count">Question {index + 1} of {QUESTIONS.length}</p>
-          <p className="question-text">{current.text}</p>
-
-          {current.type === 'text' && (
-            <input type="text" value={answers[current.id] || ''} onChange={handleChange} />
-          )}
-
-          {current.type === 'number' && (
-            <input type="number" value={answers[current.id] || ''} onChange={handleChange} />
-          )}
-
-          {current.type === 'select' && (
-            <div className="options">
-              {current.options.map((opt) => (
-                <label key={opt} className="option-label">
-                  <input
-                    type="radio"
-                    name={current.id}
-                    value={opt}
-                    checked={answers[current.id] === opt}
-                    onChange={handleChange}
-                  />
-                  <span>{opt}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          <div className="survey-actions">
-            <button onClick={handlePrev} disabled={index === 0}>Back</button>
-            <button onClick={handleNext}>{index === QUESTIONS.length - 1 ? 'Finish' : 'Next'}</button>
-          </div>
-        </div>
-      ) : (
-        <div className="results-area">
-          <h3>Thanks — here is a short summary</h3>
-          <p><strong>Pattern:</strong> {simplePredict(encodeAnswers(answers), answers)}</p>
-          <p className="results-note">This is an indicative pattern only and not a medical diagnosis. Consider tracking for a few cycles and consult a healthcare professional if concerns persist.</p>
-        </div>
-      )}
+      {surveyContent}
     </div>
   );
 };

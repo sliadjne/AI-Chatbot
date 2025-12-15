@@ -5,7 +5,6 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
   const [localData, setLocalData] = useState(cycleData || {
     lastPeriodDate: '', // period start date (kept for Dashboard compatibility)
     periodEndDate: '',
-    ongoing: false,
     cycleLength: 28,
     periodLength: 5,
   });
@@ -36,11 +35,9 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24));
     const dayInCycle = daysSinceStart % source.cycleLength;
 
-    // Determine if we're currently in the menstruation window using explicit end date or ongoing flag
+    // Determine if we're currently in the menstruation window using explicit end date
     let inMenstruation = false;
-    if (source.ongoing) {
-      if (today >= start) inMenstruation = true;
-    } else if (source.periodEndDate) {
+    if (source.periodEndDate) {
       const end = new Date(source.periodEndDate);
       // include end day
       if (today >= start && today <= end) inMenstruation = true;
@@ -81,18 +78,14 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
     if (onPeriodLogged && localData.lastPeriodDate) {
       onPeriodLogged(localData.lastPeriodDate, localData.periodEndDate || null);
     }
-  }, [localData.lastPeriodDate, localData.periodEndDate, localData.ongoing, localData.cycleLength, localData.periodLength, setCycleData]);
+  }, [localData.lastPeriodDate, localData.periodEndDate, localData.cycleLength, localData.periodLength, setCycleData]);
 
   const handleStartDateChange = (e) => {
     setLocalData(prev => ({ ...prev, lastPeriodDate: e.target.value }));
   };
 
   const handleEndDateChange = (e) => {
-    setLocalData(prev => ({ ...prev, periodEndDate: e.target.value, ongoing: false }));
-  };
-
-  const toggleOngoing = (e) => {
-    setLocalData(prev => ({ ...prev, ongoing: e.target.checked, periodEndDate: e.target.checked ? '' : prev.periodEndDate }));
+    setLocalData(prev => ({ ...prev, periodEndDate: e.target.value }));
   };
 
   const handleCycleLengthChange = (e) => {
@@ -182,12 +175,8 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
               value={localData.periodEndDate}
               onChange={handleEndDateChange}
               className="tracker-input"
-              disabled={localData.ongoing}
             />
-            <label style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
-              <input type="checkbox" checked={localData.ongoing} onChange={toggleOngoing} />
-              <span style={{color:'#718096'}}>Period still ongoing</span>
-            </label>
+          
           </div>
 
           <div className="form-row">
@@ -297,6 +286,14 @@ const MenstrualTracker = ({ cycleData, setCycleData, dayEntries, setDayEntries, 
                     const monthKey = `${y}-${m}`;
                     const log = monthlyLogs?.[monthKey];
                     if (!log) return 'No monthly log for this month.';
+                    if (log.isInitialCycle) {
+                      // For initial cycle show only the user's entered actual dates (no predicted)
+                      if (!log.actualStart) return 'Actual: Not logged yet';
+                      const s = new Date(log.actualStart).toLocaleDateString();
+                      if (!log.actualEnd) return `Actual: ${s}`;
+                      const e = new Date(log.actualEnd).toLocaleDateString();
+                      return `Actual: ${s} → ${e}`;
+                    }
                     const pred = log.predictedStart ? `${new Date(log.predictedStart).toLocaleDateString()} → ${new Date(log.predictedEnd).toLocaleDateString()}` : 'Predicted: —';
                     const act = log.actualStart ? `${new Date(log.actualStart).toLocaleDateString()} → ${new Date(log.actualEnd).toLocaleDateString()}` : 'Actual: Not logged yet';
                     return `${pred} · ${act}`;

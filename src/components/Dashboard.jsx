@@ -25,6 +25,42 @@ const Dashboard = () => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
 
+  // Normalize initial cycle: ensure exactly the earliest actual-start month is marked as the initial cycle
+  useEffect(() => {
+    const entries = monthlyLogs || {};
+    let earliestKey = null;
+    Object.entries(entries).forEach(([k, v]) => {
+      if (v && v.actualStart) {
+        if (!earliestKey) earliestKey = k;
+        else if (parseLocalDate(v.actualStart) < parseLocalDate(entries[earliestKey].actualStart)) earliestKey = k;
+      }
+    });
+    if (!earliestKey) return;
+
+    setMonthlyLogs((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      Object.keys(next).forEach((k) => {
+        const shouldBeInitial = k === earliestKey;
+        if ((next[k]?.isInitialCycle || false) !== shouldBeInitial) {
+          next[k] = { ...next[k], isInitialCycle: shouldBeInitial };
+          if (shouldBeInitial) {
+            next[k].predictedStart = null;
+            next[k].predictedEnd = null;
+          }
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+
+    // Update firstEntryDate to earliest actual start if necessary
+    const earliestStart = entries[earliestKey].actualStart;
+    if (earliestStart && (!firstEntryDate || parseLocalDate(earliestStart) < parseLocalDate(firstEntryDate))) {
+      setFirstEntryDate(earliestStart);
+    }
+  }, [monthlyLogs]);
+
   const getFirstDayOfMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
@@ -212,9 +248,44 @@ const Dashboard = () => {
 
   const surveyMetrics = computePhaseFromSurvey(surveyResults);
 
-  // Data points now include uploaded dataset rows + per-day entries + survey results
+  // Data points: points are earned only from per-day entries (survey gives zero points)
   const dayEntriesCount = Object.keys(dayEntries || {}).length;
-  const dataPointsCount = uploadedData.length + dayEntriesCount + (surveyResults ? 1 : 0);
+  const dataPointsCount = dayEntriesCount;
+
+  // Generate friendly survey-driven insights (explanatory only)
+  const generateSurveyInsights = (results) => {
+    if (!results || !results.answers) return null;
+    const a = results.answers;
+    const notes = [];
+
+    if (a.stress) {
+      if (a.stress === 'high') notes.push('High stress levels can make your cycles less regular and may worsen symptoms — consider stress-reduction like walks, short breaks, or sleep hygiene.');
+      else if (a.stress === 'medium') notes.push('Moderate stress can subtly affect cycle regularity; keeping an eye on stress and self-care may help.');
+      else notes.push('Low stress is great — it supports more regular cycles.');
+    }
+
+    if (a.sleep_hours) {
+      const hrs = Number(a.sleep_hours) || 0;
+      if (hrs <= 5) notes.push('Short sleep (≤5h) can impact hormones and make symptoms worse — try to prioritize restful sleep.');
+      else if (hrs <= 7) notes.push('Sleep could be improved; aim for consistent, restorative sleep where possible.');
+    }
+
+    if (a.exercise) {
+      if (a.exercise === 'never' || a.exercise === 'rarely') notes.push('Less physical activity may be linked to symptom burden; light, regular movement can help mood and cycles.');
+    }
+
+    if (a.pms_severity) {
+      if (a.pms_severity === 'severe') notes.push('Severe PMS suggests you might benefit from tracking symptoms closely and discussing options with a provider if it impacts daily life.');
+      else if (a.pms_severity === 'moderate') notes.push('Moderate PMS is common; tracking helps identify patterns and triggers.');
+    }
+
+    if (a.fatigue === 'yes') notes.push('Feeling unusually fatigued may relate to sleep, stress, or other health factors — logging energy and sleep together can reveal patterns.');
+
+    if (a.acne === 'yes') notes.push('Recent acne can be an influence for some cycle-related conditions; keep an eye on patterns across cycles.');
+
+    if (!notes.length) return ['Thanks — your survey results look within common ranges. Continue tracking for clearer insights.'];
+    return notes;
+  };
 
   // Determine whether the user has provided any input at all
   const profileCount = [userProfile?.height, userProfile?.weight, userProfile?.age].filter(Boolean).length;
@@ -446,16 +517,37 @@ const Dashboard = () => {
     const key = monthKeyFromDate(actualDate);
     setMonthlyLogs((prev) => {
       const next = { ...prev };
-      if (!next[key]) {
-        // create an empty predicted slot (unknown) and fill actuals
-        next[key] = { predictedStart: null, predictedEnd: null, actualStart: actualStartStr || null, actualEnd: actualEndStr || null, createdAt: new Date().toISOString() };
+      const hasAnyActual = Object.values(prev || {}).some((v) => v && v.actualStart);
+
+      // If this is the first-ever actual logged, lock it to either the user-provided date
+      // or fall back to the calendar's predicted date for that month
+      if (!hasAnyActual) {
+        const baseStart = getSourceCycle()?.startDate || actualStartStr;
+        const cycleLen = cycleData?.cycleLength ? Number(cycleData.cycleLength) : 28;
+        const periodLen = cycleData?.periodLength ? Number(cycleData.periodLength) : 5;
+        const mIdx = actualDate.getFullYear() * 12 + actualDate.getMonth();
+        const predictedMap = computePredictedMap(baseStart, cycleLen, periodLen, mIdx, mIdx);
+        const pred = predictedMap[key];
+
+        // For the initial cycle we respect only the user's supplied dates.
+        const finalStart = actualStartStr || null;
+        const finalEnd = actualEndStr || null;
+
+        next[key] = { predictedStart: null, predictedEnd: null, actualStart: finalStart, actualEnd: finalEnd, isInitialCycle: true, createdAt: new Date().toISOString() };
       } else {
-        // fill actuals if not already present
+        if (!next[key]) next[key] = { predictedStart: null, predictedEnd: null, actualStart: null, actualEnd: null, createdAt: new Date().toISOString() };
         if (!next[key].actualStart) next[key].actualStart = actualStartStr || null;
         if (!next[key].actualEnd) next[key].actualEnd = actualEndStr || null;
       }
+
       return next;
     });
+
+    // After recording a new actual, populate predicted months using calendar base
+    const baseStart = getSourceCycle()?.startDate || actualStartStr;
+    const cycleLen = cycleData?.cycleLength ? Number(cycleData.cycleLength) : 28;
+    const periodLen = cycleData?.periodLength ? Number(cycleData.periodLength) : 5;
+    ensurePredictedLogs(baseStart, cycleLen, periodLen);
   };
 
   // Explicit update when user edits actuals from the UI
@@ -717,6 +809,15 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              {surveyResults && (
+                <div className="survey-insights-section">
+                  <h4>Your Cycle Insights (Based on Your Survey)</h4>
+                  {generateSurveyInsights(surveyResults).map((line, idx) => (
+                    <p key={idx} className="survey-insight-line">{line}</p>
+                  ))}
+                </div>
+              )}
+
               <div className="compact-metrics">
                 <div className="metric-row"><strong>Regularity:</strong> {cycleRegularityPercent}%</div>
                 <div className="metric-row"><strong>Symptoms:</strong> {symptomSeverityPercent}%</div>
@@ -725,9 +826,9 @@ const Dashboard = () => {
             </div>
 
             <div className="tracker-top-right">
-              <div className="card">
+                <div className="card">
                 <h4>Survey</h4>
-                <SurveyTab onComplete={(results) => setSurveyResults(results)} />
+                <SurveyTab existingResult={surveyResults} onComplete={(results) => setSurveyResults(results)} onReset={() => setSurveyResults(null)} />
               </div>
             </div>
             <div className="tracker-bottom-left">
@@ -944,7 +1045,7 @@ const Dashboard = () => {
           <div className="tab-content-inner">
             <div className="logs-section">
               <h2>📚 Cycle Logs</h2>
-              <p className="muted">Monthly predicted vs actual tracking. Logs UI is available.</p>
+              <p className="muted">Monthly predicted vs actual tracking!</p>
               <MonthlyLogs monthlyLogs={monthlyLogs} onLogActual={(k,s,e) => recordActualPeriod(s,e)} onUpdateActual={(k,s,e) => updateActualPeriod(k,s,e)} onOpenLog={(k) => openTrackerForMonth(k)} />
             </div>
           </div>

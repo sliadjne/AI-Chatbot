@@ -15,6 +15,8 @@ const MonthCard = ({ keyStr, entry, onLogActual, onUpdateActual, onOpenLog }) =>
 
   const submit = () => {
     if (!start) return;
+    // Do not allow editing or re-logging the immutable initial cycle
+    if (entry.isInitialCycle) return;
     if (entry.actualStart) {
       onUpdateActual && onUpdateActual(keyStr, start, end || null);
     } else {
@@ -29,12 +31,19 @@ const MonthCard = ({ keyStr, entry, onLogActual, onUpdateActual, onOpenLog }) =>
         <strong>{keyStr}</strong>
       </div>
       <div className="month-body">
-        <div className="row"><span className="label">Predicted</span><span className="value">{entry.predictedStart ? `${formatLocal(entry.predictedStart)} → ${formatLocal(entry.predictedEnd)}` : '—'}</span></div>
-        <div className="row"><span className="label">Actual</span><span className="value">{entry.actualStart ? `${formatLocal(entry.actualStart)} → ${formatLocal(entry.actualEnd)}` : 'Not logged yet'}</span></div>
+          <div className="row"><span className="label">Predicted</span><span className="value">{entry.isInitialCycle ? '—' : (entry.predictedStart ? `${formatLocal(entry.predictedStart)} → ${formatLocal(entry.predictedEnd)}` : '—')}</span></div>
+          <div className="row"><span className="label">Actual</span><span className="value">{(() => {
+            if (!entry.actualStart) return 'Not logged yet';
+            const s = formatLocal(entry.actualStart);
+            if (!entry.actualEnd) return `${s}${entry.isInitialCycle ? ' — as logged (locked)' : ''}`;
+            const e = formatLocal(entry.actualEnd);
+            const days = Math.round((new Date(entry.actualEnd) - new Date(entry.actualStart)) / (1000*60*60*24)) + 1;
+            return `${s} → ${e} (${days} days)${entry.isInitialCycle ? ' — as logged (locked)' : ''}`;
+           })()}</span></div>
       </div>
       <div className="month-actions">
-        {!entry.actualStart && !editing && <button className="btn" onClick={() => setEditing(true)}>Log actual period</button>}
-        {entry.actualStart && !editing && <button className="btn small" onClick={() => setEditing(true)}>Edit actual</button>}
+        {!entry.actualStart && !editing && !entry.isInitialCycle && <button className="btn" onClick={() => setEditing(true)}>Log actual period</button>}
+        {entry.actualStart && !editing && !entry.isInitialCycle && <button className="btn small" onClick={() => setEditing(true)}>Edit actual</button>}
         {editing && (
           <div className="edit-form">
             <label>Actual Start</label>
