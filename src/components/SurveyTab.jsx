@@ -94,13 +94,16 @@ const SurveyTab = ({ onComplete, existingResult = null, onReset }) => {
       <div className="survey-locked">
         <p>You've already completed this survey.</p>
         <div className="survey-locked-actions">
-          <button onClick={() => {
+          <button className="btn small secondary retake-btn" onClick={() => {
             const ok = window.confirm('Retaking will reset your previous answers. Continue?');
             if (ok) {
               if (typeof onReset === 'function') onReset();
               setAnswers({}); setIndex(0); setFinished(false);
             }
-          }}>Retake survey</button>
+          }}>
+            <span className="retake-icon">🔄</span>
+            <span>Retake survey</span>
+          </button>
         </div>
       </div>
     );
