@@ -77,6 +77,22 @@ For Kubernetes, check out `k8s-deployment.yml` for cloud deployment. ☁️
 
 Remember, this is client-side only—your data stays with you! 🔐 
 
+## 📸 Screenshots
+
+Here are some cute glimpses of PENNYLY in action! 🌸
+
+- ![AI Insight 4](screenshots/AI_Insight4.png)
+- ![AI Insights 1](screenshots/AI_Insights1.png)
+- ![AI Insights 2](screenshots/AI_Insights2.png)
+- ![AI Insights 3](screenshots/AI_Insights3.png)
+- ![AI Insights 5](screenshots/AI_Insights5.png)
+- ![Cycle & Tracker 1](screenshots/Cycle&Tracker1.png)
+- ![Cycle & Tracker 2](screenshots/Cycle&Tracker2.png)
+- ![Cycle Logs](screenshots/CycleLogs.png)
+- ![Login Page](screenshots/Loginpage.png)
+- ![Overview 1](screenshots/Overview1.png)
+- ![Overview 2](screenshots/Overview2.png)
+
 ## 🤝 Contributing
 
 Want to add more cuteness? Fork the repo, make your changes, and submit a PR! We love contributions that make PENNYLY even more fabulous. 💃 
