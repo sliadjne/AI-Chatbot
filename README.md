@@ -1,15 +1,21 @@
-# 💖 PENNILY: Your Magical Menstrual Companion 🌸
+# 💖 PENNILY: Your Magical Menstrual Companion 🌸 <3
 
 Welcome to **PENNILY**, the sweetest way to track your menstrual cycle! 🌟 This adorable React app helps you log periods, predict cycles, visualize data with cute charts, and chat with an AI-powered chatbot for all your cycle questions. It's like having a bestie in your pocket! 🦄✨
 
 ## 🌈 Features
 
-- **Period Tracker**: Log your cycles, symptoms, and moods with ease. 📅💕
-- **Cycle Visualizations**: See your data in pretty charts powered by Recharts. 📊🌺
-- **AI Chatbot**: Ask questions and get personalized advice from our Gemini-powered friend! 🤖💬
-- **PCOS Predictions**: Get insights on potential PCOS patterns using smart ML. 🔮💖
-- **Surveys & Logs**: Fill out fun surveys and keep monthly logs. 📝🧸
-- **Dashboard**: A cozy dashboard to view all your cycle magic. 🏠🌸
+- **Period Tracker**: Log your cycles, symptoms, and moods with ease. 📅💕  
+  ![Period Tracker](screenshots/Cycle&Tracker1.png)
+- **Cycle Visualizations**: See your data in pretty charts powered by Recharts. 📊🌺  
+  ![Cycle Visualizations](screenshots/Cycle&Tracker2.png)
+- **AI Chatbot**: Ask questions and get personalized advice from our Gemini-powered friend! 🤖💬  
+  ![AI Chatbot](screenshots/AI_Insights1.png)
+- **PCOS Predictions**: Get insights on potential PCOS patterns using smart ML. 🔮💖  
+  ![PCOS Predictions](screenshots/AI_Insights2.png)
+- **Surveys & Logs**: Fill out fun surveys and keep monthly logs. 📝🧸  
+  ![Surveys & Logs](screenshots/CycleLogs.png)
+- **Dashboard**: A cozy dashboard to view all your cycle magic. 🏠🌸  
+  ![Dashboard](screenshots/Overview1.png)
 
 All data is stored locally in your browser for privacy—no backends, just pure cuteness! 🔒 
 
@@ -61,7 +67,8 @@ For Kubernetes, check out `k8s-deployment.yml` for cloud deployment. ☁️
 
 ## 🎀 Usage
 
-- **Landing Page**: Start here for an intro to your cycle journey. 🏁
+- **Landing Page**: Start here for an intro to your cycle journey. 🏁  
+  ![Landing Page](screenshots/Loginpage.png)
 - **Dashboard**: View summaries, charts, and predictions. 📈
 - **Tracker**: Log your periods and symptoms. 📓
 - **Logs**: Review monthly data. 📖
@@ -80,4 +87,4 @@ This project is licensed under the MIT License—share the love! ❤️
 
 ---
 
-Made with 💖 by the PENNILY team. Happy tracking, queens! 👑🌟
+Made with 💖 by the PENNILY team (Cicak-Cicak Group). Happy tracking, queens! 👑🌟
