@@ -80,4 +80,4 @@ This project is licensed under the MIT License—share the love! ❤️
 
 ---
 
-Made with 💖 by the PENNILY team. Happy tracking, queens! 👑🌟
+Made with 💖 by the PENNILY team (Cicak-Cicak Group). Happy tracking, queens! 👑🌟
