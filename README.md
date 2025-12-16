@@ -5,17 +5,17 @@ Welcome to **PENNILY**, the sweetest way to track your menstrual cycle! 🌟 Thi
 ## 🌈 Features
 
 - **Period Tracker**: Log your cycles, symptoms, and moods with ease. 📅💕  
-  ![Period Tracker](screenshots/Cycle&Tracker1.png)
+  ![Period Tracker](Screenshots/Cycle&Tracker1.png)
 - **Cycle Visualizations**: See your data in pretty charts powered by Recharts. 📊🌺  
-  ![Cycle Visualizations](screenshots/Cycle&Tracker2.png)
+  ![Cycle Visualizations](Screenshots/Cycle&Tracker2.png)
 - **AI Chatbot**: Ask questions and get personalized advice from our Gemini-powered friend! 🤖💬  
-  ![AI Chatbot](screenshots/AI_Insights1.png)
+  ![AI Chatbot](Screenshots/AI_Insights1.png)
 - **PCOS Predictions**: Get insights on potential PCOS patterns using smart ML. 🔮💖  
-  ![PCOS Predictions](screenshots/AI_Insights2.png)
+  ![PCOS Predictions](Screenshots/AI_Insights2.png)
 - **Surveys & Logs**: Fill out fun surveys and keep monthly logs. 📝🧸  
-  ![Surveys & Logs](screenshots/CycleLogs.png)
+  ![Surveys & Logs](Screenshots/CycleLogs.png)
 - **Dashboard**: A cozy dashboard to view all your cycle magic. 🏠🌸  
-  ![Dashboard](screenshots/Overview1.png)
+  ![Dashboard](Screenshots/Overview1.png)
 
 All data is stored locally in your browser for privacy—no backends, just pure cuteness! 🔒 
 
@@ -68,7 +68,7 @@ For Kubernetes, check out `k8s-deployment.yml` for cloud deployment. ☁️
 ## 🎀 Usage
 
 - **Landing Page**: Start here for an intro to your cycle journey. 🏁  
-  ![Landing Page](screenshots/Loginpage.png)
+  ![Landing Page](Screenshots/Loginpage.png)
 - **Dashboard**: View summaries, charts, and predictions. 📈
 - **Tracker**: Log your periods and symptoms. 📓
 - **Logs**: Review monthly data. 📖
@@ -81,17 +81,17 @@ Remember, this is client-side only—your data stays with you! 🔐
 
 Here are some cute glimpses of PENNYLY in action! 🌸
 
-- ![AI Insight 4](screenshots/AI_Insight4.png)
-- ![AI Insights 1](screenshots/AI_Insights1.png)
-- ![AI Insights 2](screenshots/AI_Insights2.png)
-- ![AI Insights 3](screenshots/AI_Insights3.png)
-- ![AI Insights 5](screenshots/AI_Insights5.png)
-- ![Cycle & Tracker 1](screenshots/Cycle&Tracker1.png)
-- ![Cycle & Tracker 2](screenshots/Cycle&Tracker2.png)
-- ![Cycle Logs](screenshots/CycleLogs.png)
-- ![Login Page](screenshots/Loginpage.png)
-- ![Overview 1](screenshots/Overview1.png)
-- ![Overview 2](screenshots/Overview2.png)
+- ![AI Insight 4](Screenshots/AI_Insight4.png)
+- ![AI Insights 1](Screenshots/AI_Insights1.png)
+- ![AI Insights 2](Screenshots/AI_Insights2.png)
+- ![AI Insights 3](Screenshots/AI_Insights3.png)
+- ![AI Insights 5](Screenshots/AI_Insights5.png)
+- ![Cycle & Tracker 1](Screenshots/Cycle&Tracker1.png)
+- ![Cycle & Tracker 2](Screenshots/Cycle&Tracker2.png)
+- ![Cycle Logs](Screenshots/CycleLogs.png)
+- ![Login Page](Screenshots/Loginpage.png)
+- ![Overview 1](Screenshots/Overview1.png)
+- ![Overview 2](Screenshots/Overview2.png)
 
 ## 🤝 Contributing
 
