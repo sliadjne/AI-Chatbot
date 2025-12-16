@@ -17,7 +17,7 @@ Welcome to **PENNILY**, the sweetest way to track your menstrual cycle! 🌟 Thi
 - **Dashboard**: A cozy dashboard to view all your cycle magic. 🏠🌸  
   ![Dashboard](Screenshots/Overview1.png)
 AI Insights. 🏠🌸  
-  ![Dashboard](Screenshots/AI_Insights5)
+  ![Dashboard](Screenshots/AI_Insights5.png)
 
 All data is stored locally in your browser for privacy—no backends, just pure cuteness! 🔒 
 
