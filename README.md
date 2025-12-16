@@ -16,6 +16,8 @@ Welcome to **PENNILY**, the sweetest way to track your menstrual cycle! 🌟 Thi
   ![Surveys & Logs](Screenshots/CycleLogs.png)
 - **Dashboard**: A cozy dashboard to view all your cycle magic. 🏠🌸  
   ![Dashboard](Screenshots/Overview1.png)
+AI Insights. 🏠🌸  
+  ![Dashboard](Screenshots/AI_Insights5)
 
 All data is stored locally in your browser for privacy—no backends, just pure cuteness! 🔒 
 
@@ -77,21 +79,6 @@ For Kubernetes, check out `k8s-deployment.yml` for cloud deployment. ☁️
 
 Remember, this is client-side only—your data stays with you! 🔐 
 
-## 📸 Screenshots
-
-Here are some cute glimpses of PENNYLY in action! 🌸
-
-- ![AI Insight 4](Screenshots/AI_Insight4.png)
-- ![AI Insights 1](Screenshots/AI_Insights1.png)
-- ![AI Insights 2](Screenshots/AI_Insights2.png)
-- ![AI Insights 3](Screenshots/AI_Insights3.png)
-- ![AI Insights 5](Screenshots/AI_Insights5.png)
-- ![Cycle & Tracker 1](Screenshots/Cycle&Tracker1.png)
-- ![Cycle & Tracker 2](Screenshots/Cycle&Tracker2.png)
-- ![Cycle Logs](Screenshots/CycleLogs.png)
-- ![Login Page](Screenshots/Loginpage.png)
-- ![Overview 1](Screenshots/Overview1.png)
-- ![Overview 2](Screenshots/Overview2.png)
 
 ## 🤝 Contributing
 
