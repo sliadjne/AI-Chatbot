@@ -1,4 +1,4 @@
-# 💖 PENNILY: Your Magical Menstrual Companion 🌸
+# 💖 PENNILY: Your Magical Menstrual Companion 🌸 <3
 
 Welcome to **PENNILY**, the sweetest way to track your menstrual cycle! 🌟 This adorable React app helps you log periods, predict cycles, visualize data with cute charts, and chat with an AI-powered chatbot for all your cycle questions. It's like having a bestie in your pocket! 🦄✨
 
