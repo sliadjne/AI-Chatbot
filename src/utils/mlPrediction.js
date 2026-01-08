@@ -418,9 +418,15 @@ export const buildAIContext = ({ userProfile = {}, surveyResults = null, dayEntr
 /**
  * Generate a short, adaptive, supportive recommendation using the consolidated AI context.
  * This is not diagnostic — it provides a rationale-linked, user-friendly suggestion.
+ * Returns null if no survey data is available (user hasn't filled out survey yet).
  */
 export const generateAdaptiveRecommendation = (ctx = {}) => {
   const { profile = {}, survey = null, avgRecentSymptoms = 0, recentEntries = [] } = ctx;
+
+  // Return null if no survey data is available - don't show recommendations until user fills out survey
+  if (!survey || Object.keys(survey).length === 0) {
+    return null;
+  }
 
   // Simple supportive heuristics that combine signals (no fixed clinical thresholds)
   const stress = survey?.stress || 'unknown';
@@ -435,7 +441,7 @@ export const generateAdaptiveRecommendation = (ctx = {}) => {
   } else if (recentSymptomLevel >= 1.5) {
     recommendation = 'You have reported several symptoms recently; gentle self-care (hydration, light movement, and tracking) may help manage day-to-day discomfort.';
   } else if (recentSymptomLevel === 0) {
-    recommendation = 'You’ve had low-symptom days recently — maintaining consistent sleep and stress-management may help keep this pattern.';
+    recommendation = 'You have experienced several low-symptom days recently. Maintaining consistent sleep and effective stress management may help keep this trend going.';
   }
 
   return { recommendation, rationale: { recentSymptomLevel, stress, sleep, profileSummary: { age: profile.age || null } } };

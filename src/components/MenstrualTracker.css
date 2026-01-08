@@ -14,9 +14,9 @@
 .tracker-title {
   text-align: left;
   color: rgb(232, 120, 136);
-  margin-bottom: 15px;
+  margin-bottom: 16px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .tracker-form {
@@ -72,12 +72,13 @@
 
 .tracker-input {
   padding: 10px 12px;
-  border: 1.5px solid #cbd5e0;
-  border-radius: 8px;
+  border: 1.5px solid rgba(232,120,136,0.2);
+  border-radius: 10px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s ease;
   outline: none;
+  background: #fff;
 }
 
 .tracker-input:focus {
@@ -94,11 +95,18 @@
 }
 
 .info-card {
-  background: #f7fafc;
+  background: linear-gradient(180deg, #ffffff, #fff9fb);
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
   text-align: center;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(232,120,136,0.12);
+  box-shadow: 0 4px 16px rgba(232,120,136,0.08);
+  transition: all 0.25s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(232,120,136,0.12);
 }
 
 .info-card h3 {
@@ -156,10 +164,10 @@
 }
 
 .symptom-btn {
-  padding: 8px 10px;
-  border: 1.5px solid #cbd5e0;
-  border-radius: 8px;
-  background: white;
+  padding: 9px 12px;
+  border: 1.5px solid rgba(232,120,136,0.2);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, #fff9f9);
   color: #2d3748;
   font-size: 12px;
   font-weight: 600;
@@ -171,28 +179,59 @@
 .symptom-btn:hover {
   border-color: rgb(232, 120, 136);
   color: rgb(232, 120, 136);
+  background: linear-gradient(180deg, #fff9f9, #fff5f7);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(232,120,136,0.1);
 }
 
 .symptom-btn.active {
-  background: rgb(232, 120, 136);
+  background: linear-gradient(90deg, rgb(232, 120, 136), rgb(248, 128, 148));
   color: white;
   border-color: rgb(232, 120, 136);
   box-shadow: 0 4px 12px rgba(232, 120, 136, 0.3);
 }
 
-.user-profile-section{background:#fff; border-radius:12px;border:1px solid rgba(226,232,240,0.9);padding:16px;margin-top:18px;margin-bottom:18px;width:100%;max-width:420px;margin:0 auto;box-shadow: 0 6px 18px rgba(15,23,42,0.04)}
-.user-profile-section h3{margin:0 0 8px 0;font-size:16px;font-weight:700;color:#2d3748}
-.per-day-entry {
-  background: linear-gradient(135deg, #fff 0%, #fff9f9 100%);
-  border: 1px solid rgba(226,232,240,1);
+.user-profile-section {
+  background: linear-gradient(180deg, #ffffff, #fff9fb);
+  border-radius: 12px;
+  border: 1px solid rgba(232,120,136,0.12);
   padding: 16px;
+  margin-top: 18px;
+  margin-bottom: 18px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(232,120,136,0.08);
+  transition: all 0.25s ease;
+}
+
+.user-profile-section:hover {
+  box-shadow: 0 6px 20px rgba(232,120,136,0.12);
+}
+
+.user-profile-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.per-day-entry {
+  background: linear-gradient(180deg, #ffffff, #fff9fb);
+  border: 1px solid rgba(232,120,136,0.12);
+  padding: 18px;
   border-radius: 12px;
   margin-top: 18px;
   margin-bottom: 18px;
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+  box-shadow: 0 4px 16px rgba(232,120,136,0.08);
+  transition: all 0.25s ease;
+}
+
+.per-day-entry:hover {
+  box-shadow: 0 6px 20px rgba(232,120,136,0.12);
 }
 
 .per-day-entry h3 {
@@ -222,16 +261,17 @@
 }
 
 .tracker-save-btn {
-  background: linear-gradient(135deg, rgb(232, 120, 136) 0%, rgb(220, 100, 120) 100%);
+  background: linear-gradient(90deg, rgb(232, 120, 136), rgb(248, 128, 148));
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 11px 20px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   font-weight: 700;
   font-size: 13px;
   transition: all 0.2s ease;
   width: 100%;
+  box-shadow: 0 2px 8px rgba(232,120,136,0.2);
 }
 
 .tracker-save-btn:hover {
@@ -241,10 +281,11 @@
 
 .entries-list {
   margin-top: 12px;
-  background: #f7fafc;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f7fafc, #fff9f9);
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(232,120,136,0.12);
+  box-shadow: 0 2px 8px rgba(232,120,136,0.06);
 }
 
 .entries-list h3 {
@@ -267,10 +308,11 @@
 }
 
 .phase-info {
-  background: #fff9f9;
+  background: linear-gradient(180deg, #fff9fb, #fff5f7);
   border-left: 4px solid rgb(232, 120, 136);
-  padding: 15px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(232,120,136,0.08);
 }
 
 .phase-info h3 {
