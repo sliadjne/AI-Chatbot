@@ -898,7 +898,7 @@ const Dashboard = () => {
             <div className="welcome-widget">
               <div className="welcome-avatar">👋</div>
               <div className="welcome-text">
-                <h3>Hey girly, welcome to PENNLY 🤍</h3>
+                <h3>Hey girly, welcome to PENNLY</h3>
                 <p>You’re in a safe space to understand your hormonal cycle. Track your cycle, and let AI gently help predict what’s next.</p>
               </div>
             </div>
