@@ -858,7 +858,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1 className="dashboard-title">❤️PENNYLY</h1>
+        <h1 className="dashboard-title">❤️PENNLY</h1>
         <p className="dashboard-subtitle">Know your cycle-Predict your flow ~ Live confidently</p>
       </div>
 
